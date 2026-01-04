@@ -13,10 +13,21 @@ type Coin = {
   trend: "up" | "down";
 };
 
+type NewsItem = {
+  id: string;
+  title: string;
+  image: string;
+  excerpt: string;
+  content: string;
+};
+
 export default function HomePage() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsError, setNewsError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -54,6 +65,42 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadNews() {
+      try {
+        setNewsLoading(true);
+        setNewsError(null);
+
+        const response = await fetch("http://localhost:4000/api/news", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load news (HTTP ${response.status})`);
+        }
+
+        const data = (await response.json()) as NewsItem[];
+        if (isMounted) setNews(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (isMounted) {
+          setNewsError(e instanceof Error ? e.message : "Failed to load news");
+          setNews([]);
+        }
+      } finally {
+        if (isMounted) setNewsLoading(false);
+      }
+    }
+
+    void loadNews();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const priceFormatter = useMemo(
     () =>
       new Intl.NumberFormat(undefined, {
@@ -84,9 +131,39 @@ export default function HomePage() {
 
   return (
     <main className="flex min-h-screen flex-col gap-6 p-4 lg:flex-row">
-      <section className="w-full lg:w-4/5">
-        <div className="min-h-60 rounded  p-4 text-black">
-          News Placeholder
+      <section className="w-full lg:w-3/5">
+        <div className=" text-black">
+          <div className="px-3 py-2 text-sm font-semibold">Latest News</div>
+          {newsLoading ? (
+            <div className="px-3 pb-2 text-sm">Loading…</div>
+          ) : newsError ? (
+            <div className="px-3 pb-2 text-sm">{newsError}</div>
+          ) : (
+            <div className="space-y-6">
+              {news.map((item) => (
+                <article
+                  key={item.id}
+                  className="border-b border-black/10 pb-4 last:border-b-0 last:pb-0"
+                >
+                  <div className="flex gap-3">
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="h-24 w-32 flex-shrink-0 rounded object-cover"
+                    />
+                    <div>
+                      <h2 className="mb-2 text-base font-semibold leading-snug">
+                        {item.title}
+                      </h2>
+                      <p className="text-sm leading-relaxed text-black/80">
+                        {item.excerpt}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
