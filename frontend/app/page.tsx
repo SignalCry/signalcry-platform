@@ -145,7 +145,10 @@ export default function HomePage() {
                   key={item.id}
                   className="border-b border-black/10 pb-4 last:border-b-0 last:pb-0"
                 >
-                  <div className="flex gap-3">
+                  <Link
+                    href={`/news/${item.id}`}
+                    className="flex gap-3 transition-colors hover:text-black"
+                  >
                     <img
                       src={item.image}
                       alt={item.title}
@@ -159,7 +162,7 @@ export default function HomePage() {
                         {item.excerpt}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                 </article>
               ))}
             </div>
