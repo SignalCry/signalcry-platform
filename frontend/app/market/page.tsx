@@ -80,7 +80,7 @@ export default function MarketPage() {
   );
 
   return (
-    <main className="min-h-screen p-4 text-black">
+    <main className="text-black">
       <h1 className="text-lg font-semibold">Crypto Market</h1>
 
       <div className="mt-4">

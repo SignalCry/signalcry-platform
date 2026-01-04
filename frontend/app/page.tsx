@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type Coin = {
   id: string;
@@ -130,7 +131,7 @@ export default function HomePage() {
   const visibleCoins = coins.slice(0, 10);
 
   return (
-    <main className="flex min-h-screen flex-col gap-6 p-4 lg:flex-row">
+    <main className="flex flex-col gap-6 lg:flex-row">
       <section className="w-full lg:w-3/5">
         <div className=" text-black">
           <div className="px-3 py-2 text-sm font-semibold">Latest News</div>
@@ -149,10 +150,12 @@ export default function HomePage() {
                     href={`/news/${item.id}`}
                     className="flex gap-3 transition-colors hover:text-black"
                   >
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.title}
-                      className="h-24 w-32 flex-shrink-0 rounded object-cover"
+                      width={128}
+                      height={96}
+                      className="h-24 w-32 shrink-0 rounded object-cover"
                     />
                     <div>
                       <h2 className="mb-2 text-base font-semibold leading-snug">
