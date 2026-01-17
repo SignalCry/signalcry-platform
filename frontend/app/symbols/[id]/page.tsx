@@ -1,6 +1,7 @@
 "use client";
 
 import TradingViewWidget from "@/app/components/TradingViewWidget";
+import { useTranslation } from "@/src/i18n";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -22,6 +23,7 @@ export default function CoinDetailsPage() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!coinId) return;
@@ -45,7 +47,7 @@ export default function CoinDetailsPage() {
         if (isMounted) setCoins(Array.isArray(data) ? data : []);
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err.message : "Failed to load coins");
+          setError(err instanceof Error ? err.message : t("errors.failedLoadCoins"));
           setCoins([]);
         }
       } finally {
@@ -93,7 +95,7 @@ export default function CoinDetailsPage() {
   if (isLoading) {
     return (
       <main className="min-h-screen p-6 text-black">
-        <p>Loading…</p>
+        <p>{t("common.loading")}</p>
       </main>
     );
   }
@@ -101,10 +103,10 @@ export default function CoinDetailsPage() {
   if (error || !coin) {
     return (
       <main className="min-h-screen p-6 text-black">
-        <p>{error ?? "Coin not found."}</p>
+        <p>{error ?? t("symbols.notFound")}</p>
         <div className="mt-3">
           <Link href="/market" className="underline">
-            Back to market
+            {t("symbols.backToMarket")}
           </Link>
         </div>
       </main>
@@ -122,7 +124,7 @@ export default function CoinDetailsPage() {
       <section className="rounded border border-black/10 bg-white">
         <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
           <div>
-            <div className="text-xs text-black/60">Coin</div>
+            <div className="text-xs text-black/60">{t("table.coin")}</div>
             <div className="font-semibold">
               {coin.name}{" "}
               <span className="text-black/60">({coin.symbol})</span>
@@ -130,21 +132,21 @@ export default function CoinDetailsPage() {
           </div>
 
           <div>
-            <div className="text-xs text-black/60">Price</div>
+            <div className="text-xs text-black/60">{t("table.price")}</div>
             <div className="font-semibold">
               {priceFormatter.format(coin.price)}
             </div>
           </div>
 
           <div>
-            <div className="text-xs text-black/60">Change</div>
+            <div className="text-xs text-black/60">{t("table.change")}</div>
             <div className={`font-semibold ${changeClass}`}>
               {arrow} {changeFormatter.format(coin.change)}
             </div>
           </div>
 
           <div>
-            <div className="text-xs text-black/60">Change %</div>
+            <div className="text-xs text-black/60">{t("table.percent")}</div>
             <div className={`font-semibold ${changeClass}`}>
               {percentFormatter.format(coin.changePercent)}%
             </div>
@@ -164,13 +166,13 @@ export default function CoinDetailsPage() {
         {/* Market table */}
         <aside className="lg:col-span-3">
           <div className="rounded border border-black/10 bg-white flex flex-col">
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-sm font-semibold">Crypto Market</span>
+              <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-sm font-semibold">{t("home.cryptoMarket")}</span>
               <Link
                 href="/market"
                 className="text-xs sm:text-sm text-gray-500 underline hover:text-gray-700"
               >
-                View all →
+                {t("common.viewAll")} →
               </Link>
             </div>
 
@@ -179,16 +181,16 @@ export default function CoinDetailsPage() {
                 <thead className="sticky top-0 z-10 bg-white border-b border-black/10">
                   <tr className="text-left">
                     <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
-                      Coin
+                      {t("table.coin")}
                     </th>
                     <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
-                      Price
+                      {t("table.price")}
                     </th>
                     <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
-                      Change
+                      {t("table.change")}
                     </th>
                     <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
-                      %
+                      {t("table.percent")}
                     </th>
                   </tr>
                 </thead>

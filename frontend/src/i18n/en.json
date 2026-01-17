@@ -1,0 +1,45 @@
+{
+  "navbar": {
+    "home": "Home",
+    "market": "Market"
+  },
+  "footer": {
+    "copy": "© 2026 SignalCry",
+    "language": "Language",
+    "english": "English",
+    "spanish": "Español"
+  }
+  ,
+  "common": {
+    "loading": "Loading…",
+    "viewAll": "View all"
+  },
+  "home": {
+    "latestNews": "Latest News",
+    "cryptoMarket": "Crypto Market"
+  },
+  "table": {
+    "coin": "Coin",
+    "priceUSD": "Price (USD)",
+    "price": "Price",
+    "change": "Change",
+    "percent": "%"
+  },
+  "errors": {
+    "failedLoadCoins": "Failed to load coins",
+    "failedLoadNews": "Failed to load news",
+    "failedLoadArticle": "Failed to load article"
+  },
+  "symbols": {
+    "loading": "Loading…",
+    "notFound": "Coin not found.",
+    "backToMarket": "Back to market"
+  },
+  "news": {
+    "loading": "Loading…",
+    "notFound": "Article not found.",
+    "unlockMessage": "Pay to unlock full article",
+    "price": "Only €0.99",
+    "unlockButton": "Unlock for €0.99"
+  }
+}

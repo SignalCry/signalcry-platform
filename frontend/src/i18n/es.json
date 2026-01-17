@@ -1,0 +1,45 @@
+{
+  "navbar": {
+    "home": "Inicio",
+    "market": "Mercado"
+  },
+  "footer": {
+    "copy": "© 2026 SignalCry",
+    "language": "Idioma",
+    "english": "Inglés",
+    "spanish": "Español"
+  }
+  ,
+  "common": {
+    "loading": "Cargando…",
+    "viewAll": "Ver todo"
+  },
+  "home": {
+    "latestNews": "Últimas noticias",
+    "cryptoMarket": "Mercado cripto"
+  },
+  "table": {
+    "coin": "Moneda",
+    "priceUSD": "Precio (USD)",
+    "price": "Precio",
+    "change": "Cambio",
+    "percent": "%"
+  },
+  "errors": {
+    "failedLoadCoins": "Error al cargar monedas",
+    "failedLoadNews": "Error al cargar noticias",
+    "failedLoadArticle": "Error al cargar artículo"
+  },
+  "symbols": {
+    "loading": "Cargando…",
+    "notFound": "Moneda no encontrada.",
+    "backToMarket": "Volver al mercado"
+  },
+  "news": {
+    "loading": "Cargando…",
+    "notFound": "Artículo no encontrado.",
+    "unlockMessage": "Paga para desbloquear el artículo completo",
+    "price": "Solo €0.99",
+    "unlockButton": "Desbloquear por €0.99"
+  }
+}
