@@ -34,7 +34,6 @@ export default function CoinDetailsPage() {
         setError(null);
 
         const response = await fetch("http://localhost:4000/api/coins", {
-          method: "GET",
           headers: { Accept: "application/json" },
         });
 
@@ -113,22 +112,20 @@ export default function CoinDetailsPage() {
   }
 
   const tvSymbol = `BINANCE:${coin.symbol.toUpperCase()}USDT`;
-
   const isUp = coin.trend === "up";
   const changeClass = isUp ? "text-green-600" : "text-red-600";
   const arrow = isUp ? "▲" : "▼";
-  const changeSign = coin.change > 0 ? "+" : "";
-  const percentSign = coin.changePercent > 0 ? "+" : "";
 
   return (
-    <main className="min-h-screen p-6 text-black">
-      {/* Top summary "short table" */}
+    <main className="min-h-screen p-4 sm:p-6 text-black">
+      {/* Top summary */}
       <section className="rounded border border-black/10 bg-white">
         <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4">
           <div>
             <div className="text-xs text-black/60">Coin</div>
             <div className="font-semibold">
-              {coin.name} <span className="text-black/60">({coin.symbol})</span>
+              {coin.name}{" "}
+              <span className="text-black/60">({coin.symbol})</span>
             </div>
           </div>
 
@@ -142,100 +139,90 @@ export default function CoinDetailsPage() {
           <div>
             <div className="text-xs text-black/60">Change</div>
             <div className={`font-semibold ${changeClass}`}>
-              {arrow} {changeSign}
-              {changeFormatter.format(coin.change)}
+              {arrow} {changeFormatter.format(coin.change)}
             </div>
           </div>
 
           <div>
             <div className="text-xs text-black/60">Change %</div>
             <div className={`font-semibold ${changeClass}`}>
-              {percentSign}
               {percentFormatter.format(coin.changePercent)}%
             </div>
           </div>
         </div>
       </section>
 
-      {/* 70/30 layout */}
+      {/* Responsive layout */}
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-10">
+        {/* Chart */}
         <section className="rounded border border-black/10 bg-white lg:col-span-7">
-          <div className="h-[70vh] min-h-[520px] w-full">
+          <div className="h-[60vh] sm:h-[65vh] lg:h-[70vh] min-h-[420px] w-full">
             <TradingViewWidget symbol={tvSymbol} theme="light" />
           </div>
         </section>
 
+        {/* Market table */}
         <aside className="lg:col-span-3">
-          <div className="rounded border border-black/10 bg-white text-black flex flex-col">
-            <div className="flex items-center justify-between px-3 py-2 shrink-0">
+          <div className="rounded border border-black/10 bg-white flex flex-col">
+            <div className="flex items-center justify-between px-3 py-2">
               <span className="text-sm font-semibold">Crypto Market</span>
               <Link
                 href="/market"
-                className="flex items-center gap-1 text-sm font-medium text-gray-500 underline underline-offset-2 hover:text-gray-700"
+                className="text-xs sm:text-sm text-gray-500 underline hover:text-gray-700"
               >
-                View all <span aria-hidden="true">&rarr;</span>
+                View all →
               </Link>
             </div>
 
-            {/* Scroll area */}
-            <div className="max-h-[60vh] lg:max-h-[70vh] overflow-auto">
-              <table className="w-full min-w-[420px] text-sm">
+            <div className="max-h-[60vh] lg:max-h-[70vh] overflow-y-auto overflow-x-hidden">
+              <table className="w-full text-xs sm:text-sm">
                 <thead className="sticky top-0 z-10 bg-white border-b border-black/10">
                   <tr className="text-left">
-                    <th className="px-3 sm:px-5 py-2 font-medium">Coin</th>
-                    <th className="px-3 sm:px-5 py-2 font-medium whitespace-nowrap">
+                    <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
+                      Coin
+                    </th>
+                    <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
                       Price
                     </th>
-                    <th className="px-3 sm:px-5 py-2 font-medium whitespace-nowrap">
+                    <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
                       Change
                     </th>
-                    <th className="px-3 sm:px-5 py-2 font-medium whitespace-nowrap">
+                    <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
                       %
                     </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {visibleCoins.map((c, idx) => {
+                  {visibleCoins.map((c) => {
                     const up = c.trend === "up";
-                    const a = up ? "▲" : "▼";
                     const cls = up ? "text-green-600" : "text-red-600";
-                    const cs = c.change > 0 ? "+" : "";
-                    const ps = c.changePercent > 0 ? "+" : "";
-                    const isLast = idx === visibleCoins.length - 1;
+                    const a = up ? "▲" : "▼";
 
                     return (
-                      <tr
-                        key={c.id}
-                        className={
-                          !isLast ? "border-b border-black/10" : undefined
-                        }
-                      >
-                        <td className="px-3 sm:px-5 py-2">
-                          <div className="font-medium">
+                      <tr key={c.id} className="border-b border-black/10">
+                        <td className="px-2 sm:px-4 py-1.5 sm:py-2">
+                          <div className="font-medium leading-tight">
                             <Link href={`/symbols/${c.id}`}>{c.name}</Link>
                           </div>
-                          <div className="text-xs text-black/60">
-                            <Link href={`/symbols/${c.id}`}>{c.symbol}</Link>
+                          <div className="text-[10px] sm:text-xs text-black/60">
+                            {c.symbol}
                           </div>
                         </td>
 
-                        <td className="px-3 sm:px-5 py-2 font-medium whitespace-nowrap">
+                        <td className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
                           {priceFormatter.format(c.price)}
                         </td>
 
                         <td
-                          className={`px-3 sm:px-5 py-2 font-medium ${cls} whitespace-nowrap`}
+                          className={`px-2 sm:px-4 py-1.5 sm:py-2 font-medium ${cls}`}
                         >
-                          <span className="mr-1">{a}</span>
-                          {cs}
-                          {changeFormatter.format(c.change)}
+                          {a} {changeFormatter.format(c.change)}
                         </td>
 
                         <td
-                          className={`px-3 sm:px-5 py-2 font-medium ${cls} whitespace-nowrap`}
+                          className={`px-2 sm:px-4 py-1.5 sm:py-2 font-medium ${cls}`}
                         >
-                          {ps}
                           {percentFormatter.format(c.changePercent)}%
                         </td>
                       </tr>
