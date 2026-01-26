@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 type Coin = {
@@ -116,8 +117,21 @@ export default function MarketPage() {
                 return (
                   <tr key={coin.id}>
                     <td className="px-5 py-1.5">
-                      <div className="font-medium">{coin.name}</div>
-                      <div className="text-xs text-black/60">{coin.symbol}</div>
+                      <div className="font-medium">
+                        <Link
+                          href={`/symbols/${coin.id}`}
+                          className="font-medium"
+                        >
+                          {coin.name}
+                        </Link>
+                      </div>
+
+                      <Link
+                        href={`/symbols/${coin.id}`}
+                        className="text-xs undertext-black/60"
+                      >
+                        {coin.symbol}
+                      </Link>
                     </td>
                     <td className="px-5 py-1.5 font-medium">
                       {priceFormatter.format(coin.price)}

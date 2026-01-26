@@ -25,7 +25,7 @@ export default function RootLayout({
         className={`${ibmPlexSans.variable} antialiased`}
       >
         <Navbar />
-        <div className="mx-auto my-5 w-4/5">{children}</div>
+        <div className="mx-auto my-5 w-[90%]">{children}</div>
         <Footer />
       </body>
     </html>

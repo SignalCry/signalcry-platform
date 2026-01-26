@@ -71,13 +71,8 @@ export default function NewsArticlePage() {
   }
 
   return (
-    <main className="min-h-screen space-y-4 bg-[#f5f5f5] p-6 text-black">
+    <main className="min-h-screen space-y-4 p-6 text-black">
       <header className="flex flex-col items-center gap-3 text-center">
-        <img
-          src={article.image}
-          alt={article.title}
-          className="h-32 w-48 rounded object-cover"
-        />
         <h1 className="text-2xl font-semibold leading-tight">{article.title}</h1>
       </header>
       <section className="relative w-full">

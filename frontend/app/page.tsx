@@ -194,15 +194,9 @@ export default function HomePage() {
               <thead>
                 <tr className="text-left">
                   <th className="px-5 py-2 font-medium">Coin</th>
-                  <th className="px-5 py-2 font-medium ">
-                    Price (USD)
-                  </th>
-                  <th className="px-5 py-2 font-medium">
-                    Change
-                  </th>
-                  <th className="px-5 py-2 font-medium">
-                    %
-                  </th>
+                  <th className="px-5 py-2 font-medium ">Price (USD)</th>
+                  <th className="px-5 py-2 font-medium">Change</th>
+                  <th className="px-5 py-2 font-medium">%</th>
                 </tr>
               </thead>
               <tbody>
@@ -223,31 +217,40 @@ export default function HomePage() {
                       }
                     >
                       <td className="px-5 py-1">
-                        <div className="font-medium">{coin.name}</div>
-                        <div className="text-xs text-black/60">{coin.symbol}</div>
+                        <div className="font-medium">
+                          <Link
+                            href={`/symbols/${coin.id}`}
+                            className="font-medium"
+                          >
+                            {coin.name}
+                          </Link>
+                        </div>
+                        <div className="text-xs text-black/60">
+                          <Link
+                            href={`/symbols/${coin.id}`}
+                            className="font-medium"
+                          >
+                            {coin.symbol}
+                          </Link>
+                        </div>
                       </td>
                       <td className="px-5 py-1 font-medium">
                         {priceFormatter.format(coin.price)}
                       </td>
-                      <td
-                        className={`px-5 py-1 font-medium ${changeClass}`}
-                      >
+                      <td className={`px-5 py-1 font-medium ${changeClass}`}>
                         <span className="mr-1">{arrow}</span>
                         <span>
                           {changeSign}
                           {changeFormatter.format(coin.change)}
                         </span>
                       </td>
-                      <td
-                        className={`px-5 py-1 font-medium ${changeClass}`}
-                      >
+                      <td className={`px-5 py-1 font-medium ${changeClass}`}>
                         {percentSign}
                         {percentFormatter.format(coin.changePercent)}%
                       </td>
                     </tr>
                   );
                 })}
-
               </tbody>
             </table>
           )}
