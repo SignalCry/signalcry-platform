@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useTranslation } from "../src/i18n";
 import Image from "next/image";
 
 type Coin = {
@@ -29,6 +30,7 @@ export default function HomePage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     let isMounted = true;
@@ -51,7 +53,7 @@ export default function HomePage() {
         if (isMounted) setCoins(Array.isArray(data) ? data : []);
       } catch (e) {
         if (isMounted) {
-          setError(e instanceof Error ? e.message : "Failed to load coins");
+          setError(e instanceof Error ? e.message : t("errors.failedLoadCoins"));
           setCoins([]);
         }
       } finally {
@@ -87,7 +89,7 @@ export default function HomePage() {
         if (isMounted) setNews(Array.isArray(data) ? data : []);
       } catch (e) {
         if (isMounted) {
-          setNewsError(e instanceof Error ? e.message : "Failed to load news");
+          setNewsError(e instanceof Error ? e.message : t("errors.failedLoadNews"));
           setNews([]);
         }
       } finally {
@@ -134,9 +136,9 @@ export default function HomePage() {
     <main className="flex flex-col gap-6 lg:flex-row">
       <section className="w-full lg:w-3/5">
         <div className=" text-black">
-          <div className="px-3 py-2 text-sm font-semibold">Latest News</div>
+          <div className="px-3 py-2 text-sm font-semibold">{t("home.latestNews")}</div>
           {newsLoading ? (
-            <div className="px-3 pb-2 text-sm">Loading…</div>
+            <div className="px-3 pb-2 text-sm">{t("common.loading")}</div>
           ) : newsError ? (
             <div className="px-3 pb-2 text-sm">{newsError}</div>
           ) : (
@@ -176,27 +178,27 @@ export default function HomePage() {
       <section className="w-full lg:w-2/5">
         <div className=" text-black">
           <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-sm font-semibold">Crypto Market</span>
+            <span className="text-sm font-semibold">{t("home.cryptoMarket")}</span>
             <Link
               href="/market"
               className="text-gray-500 hover:text-gray-700 underline underline-offset-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-300 flex items-center gap-1"
             >
-              View all <span aria-hidden="true">&rarr;</span>
+              {t("common.viewAll")} <span aria-hidden="true">&rarr;</span>
             </Link>
           </div>
 
           {isLoading ? (
-            <div className="px-3 pb-1 text-sm">Loading…</div>
+            <div className="px-3 pb-1 text-sm">{t("common.loading")}</div>
           ) : error ? (
             <div className="px-3 pb-3 text-sm">{error}</div>
           ) : (
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left">
-                  <th className="px-5 py-2 font-medium">Coin</th>
-                  <th className="px-5 py-2 font-medium ">Price (USD)</th>
-                  <th className="px-5 py-2 font-medium">Change</th>
-                  <th className="px-5 py-2 font-medium">%</th>
+                  <th className="px-5 py-2 font-medium">{t("table.coin")}</th>
+                  <th className="px-5 py-2 font-medium ">{t("table.priceUSD")}</th>
+                  <th className="px-5 py-2 font-medium">{t("table.change")}</th>
+                  <th className="px-5 py-2 font-medium">{t("table.percent")}</th>
                 </tr>
               </thead>
               <tbody>

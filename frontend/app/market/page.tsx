@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "../../src/i18n";
 
 type Coin = {
   id: string;
@@ -17,6 +18,7 @@ export default function MarketPage() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     let isMounted = true;
@@ -39,7 +41,7 @@ export default function MarketPage() {
         if (isMounted) setCoins(Array.isArray(data) ? data : []);
       } catch (e) {
         if (isMounted) {
-          setError(e instanceof Error ? e.message : "Failed to load coins");
+          setError(e instanceof Error ? e.message : t("errors.failedLoadCoins"));
           setCoins([]);
         }
       } finally {
@@ -82,27 +84,21 @@ export default function MarketPage() {
 
   return (
     <main className="text-black">
-      <h1 className="text-lg font-semibold">Crypto Market</h1>
+      <h1 className="text-lg font-semibold">{t("home.cryptoMarket")}</h1>
 
       <div className="mt-4">
         {isLoading ? (
-          <div className="px-3 py-3 text-sm">Loading…</div>
+          <div className="px-3 py-3 text-sm">{t("common.loading")}</div>
         ) : error ? (
           <div className="px-3 py-3 text-sm">{error}</div>
         ) : (
           <table className="w-full text-sm">
             <thead className="border-b border-black/10">
               <tr className="text-left">
-                <th className="px-5 py-5 font-bold ">Coin</th>
-                <th className="px-5 py-5 font-bold">
-                  Price (USD)
-                </th>
-                <th className="px-5 py-5 font-bold">
-                  Change
-                </th>
-                <th className="px-5 py-5 font-bold ">
-                  %
-                </th>
+                <th className="px-5 py-5 font-bold ">{t("table.coin")}</th>
+                <th className="px-5 py-5 font-bold">{t("table.priceUSD")}</th>
+                <th className="px-5 py-5 font-bold">{t("table.change")}</th>
+                <th className="px-5 py-5 font-bold ">{t("table.percent")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/10">

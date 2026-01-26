@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslation } from "../i18n";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <header className="w-full bg-black">
@@ -20,10 +22,10 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-white md:flex">
           <Link href="/" className="hover:underline underline-offset-4">
-            Home
+            {t("navbar.home")}
           </Link>
           <Link href="/market" className="hover:underline underline-offset-4">
-            Market
+            {t("navbar.market")}
           </Link>
         </nav>
 
@@ -55,10 +57,10 @@ export default function Navbar() {
           <div className="mx-auto w-4/5 border-t border-white/15 py-3 text-sm font-medium text-white">
             <div className="flex flex-col gap-3">
               <Link href="/" onClick={() => setIsOpen(false)}>
-                Home
+                {t("navbar.home")}
               </Link>
               <Link href="/market" onClick={() => setIsOpen(false)}>
-                Market
+                {t("navbar.market")}
               </Link>
             </div>
           </div>

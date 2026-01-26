@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { useTranslation } from "@/src/i18n";
 
 type NewsItem = {
   id: string;
@@ -17,6 +18,7 @@ export default function NewsArticlePage() {
   const [article, setArticle] = useState<NewsItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!articleId) return;
@@ -41,7 +43,7 @@ export default function NewsArticlePage() {
         const found = data.find((item) => item.id === articleId) ?? null;
         if (isMounted) setArticle(found);
       } catch (err) {
-        if (isMounted) setError(err instanceof Error ? err.message : "Failed to load article");
+        if (isMounted) setError(err instanceof Error ? err.message : t("errors.failedLoadArticle"));
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -57,7 +59,7 @@ export default function NewsArticlePage() {
   if (isLoading) {
     return (
       <main className="min-h-screen p-4 text-black">
-        <p>Loading…</p>
+        <p>{t("common.loading")}</p>
       </main>
     );
   }
@@ -65,7 +67,7 @@ export default function NewsArticlePage() {
   if (error || !article) {
     return (
       <main className="min-h-screen p-4 text-black">
-        <p>{error ?? "Article not found."}</p>
+        <p>{error ?? t("news.notFound")}</p>
       </main>
     );
   }
@@ -80,10 +82,10 @@ export default function NewsArticlePage() {
           {article.content}
         </p>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <p className="text-base font-medium">Pay to unlock full article</p>
-          <p className="text-sm text-black/70">Only €0.99</p>
+          <p className="text-base font-medium">{t("news.unlockMessage")}</p>
+          <p className="text-sm text-black/70">{t("news.price")}</p>
           <button className="pointer-events-auto mt-3 rounded border border-black bg-black px-4 py-1.5 text-sm font-medium text-white">
-            Unlock for €0.99
+            {t("news.unlockButton")}
           </button>
         </div>
       </section>
