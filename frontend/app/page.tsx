@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useTranslation } from "../src/i18n";
 import Image from "next/image";
+import { useBinanceWebSocket } from "../src/hooks/useBinanceWebSocket";
+import { useEffect, useState } from "react";
 
 type Coin = {
   id: string;
   name: string;
   symbol: string;
   price: number;
-  change: number;
-  changePercent: number;
+  priceChange: number;
+  priceChangePercent: number;
   trend: "up" | "down";
 };
 
@@ -24,49 +26,56 @@ type NewsItem = {
 };
 
 export default function HomePage() {
-  const [coins, setCoins] = useState<Coin[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState<string | null>(null);
   const { t } = useTranslation();
+  
+  // Use WebSocket for live crypto data
+  const { marketData, status } = useBinanceWebSocket("ws://localhost:4000/ws/market");
 
-  useEffect(() => {
-    let isMounted = true;
+  // Mapping of Binance symbols to coin metadata (same as market page)
+  const COIN_METADATA: Record<string, { id: string; name: string; symbol: string }> = {
+    btcusdt: { id: "btc", name: "Bitcoin", symbol: "BTC" },
+    ethusdt: { id: "eth", name: "Ethereum", symbol: "ETH" },
+    bnbusdt: { id: "bnb", name: "BNB", symbol: "BNB" },
+    solusdt: { id: "sol", name: "Solana", symbol: "SOL" },
+    xrpusdt: { id: "xrp", name: "XRP", symbol: "XRP" },
+    adausdt: { id: "ada", name: "Cardano", symbol: "ADA" },
+    dogeusdt: { id: "doge", name: "Dogecoin", symbol: "DOGE" },
+    trxusdt: { id: "trx", name: "TRON", symbol: "TRX" },
+    maticusdt: { id: "matic", name: "Polygon", symbol: "MATIC" },
+    linkusdt: { id: "link", name: "Chainlink", symbol: "LINK" },
+    ltcusdt: { id: "ltc", name: "Litecoin", symbol: "LTC" },
+    avaxusdt: { id: "avax", name: "Avalanche", symbol: "AVAX" },
+    dotusdt: { id: "dot", name: "Polkadot", symbol: "DOT" },
+    atomusdt: { id: "atom", name: "Cosmos", symbol: "ATOM" },
+  };
 
-    async function loadCoins() {
-      try {
-        setIsLoading(true);
-        setError(null);
+  // Transform WebSocket data to Coin array
+  const coins = useMemo(() => {
+    const result: Coin[] = [];
 
-        const response = await fetch("http://localhost:4000/api/coins", {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
+    marketData.forEach((priceData, symbol) => {
+      const metadata = COIN_METADATA[symbol];
+      if (!metadata) return;
 
-        if (!response.ok) {
-          throw new Error(`Failed to load coins (HTTP ${response.status})`);
-        }
+      result.push({
+        id: metadata.id,
+        name: metadata.name,
+        symbol: metadata.symbol,
+        price: priceData.price,
+        priceChange: priceData.priceChange,
+        priceChangePercent: priceData.priceChangePercent,
+        trend: priceData.priceChange >= 0 ? "up" : "down",
+      });
+    });
 
-        const data = (await response.json()) as Coin[];
-        if (isMounted) setCoins(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (isMounted) {
-          setError(e instanceof Error ? e.message : t("errors.failedLoadCoins"));
-          setCoins([]);
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
+    return result;
+  }, [marketData]);
 
-    void loadCoins();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const isLoading = status === "connecting";
+  const error = status === "error" ? "WebSocket connection error" : null;
 
   useEffect(() => {
     let isMounted = true;
@@ -104,19 +113,34 @@ export default function HomePage() {
     };
   }, []);
 
-  const priceFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
+  // Smart price formatter: adjusts decimals based on price value
+  const formatPrice = (price: number) => {
+    if (price >= 1) {
+      // For prices >= $1, show 2 decimals (e.g., $42,850.25)
+      return new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(price);
+    } else if (price >= 0.01) {
+      // For prices between $0.01 - $0.99, show 4 decimals (e.g., $0.1980)
+      return new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4,
+      }).format(price);
+    } else {
+      // For very small prices < $0.01, show up to 8 decimals (e.g., $0.00000942)
+      return new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 2,
         maximumFractionDigits: 8,
-      }),
-    []
-  );
+      }).format(price);
+    }
+  };
 
   const changeFormatter = useMemo(
     () =>
       new Intl.NumberFormat(undefined, {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
+        maximumFractionDigits: 2,
       }),
     []
   );
@@ -207,8 +231,8 @@ export default function HomePage() {
                   const arrow = isUp ? "▲" : "▼";
                   const changeClass = isUp ? "text-green-600" : "text-red-600";
 
-                  const changeSign = coin.change > 0 ? "+" : "";
-                  const percentSign = coin.changePercent > 0 ? "+" : "";
+                  const changeSign = coin.priceChange > 0 ? "+" : "";
+                  const percentSign = coin.priceChangePercent > 0 ? "+" : "";
 
                   const isLast = idx === visibleCoins.length - 1;
                   return (
@@ -237,18 +261,18 @@ export default function HomePage() {
                         </div>
                       </td>
                       <td className="px-5 py-1 font-medium">
-                        {priceFormatter.format(coin.price)}
+                        {formatPrice(coin.price)}
                       </td>
                       <td className={`px-5 py-1 font-medium ${changeClass}`}>
                         <span className="mr-1">{arrow}</span>
                         <span>
                           {changeSign}
-                          {changeFormatter.format(coin.change)}
+                          {changeFormatter.format(coin.priceChange)}
                         </span>
                       </td>
                       <td className={`px-5 py-1 font-medium ${changeClass}`}>
                         {percentSign}
-                        {percentFormatter.format(coin.changePercent)}%
+                        {percentFormatter.format(coin.priceChangePercent)}%
                       </td>
                     </tr>
                   );

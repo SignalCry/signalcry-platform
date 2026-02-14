@@ -1,74 +1,110 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "../../src/i18n";
+import { useBinanceWebSocket } from "../../src/hooks/useBinanceWebSocket";
 
 type Coin = {
   id: string;
   name: string;
   symbol: string;
   price: number;
-  change: number;
-  changePercent: number;
+  priceChange: number;
+  priceChangePercent: number;
+  volume: number;
   trend: "up" | "down";
 };
 
+// Mapping of Binance symbols to coin metadata
+const COIN_METADATA: Record<string, { id: string; name: string; symbol: string }> = {
+  btcusdt: { id: "btc", name: "Bitcoin", symbol: "BTC" },
+  ethusdt: { id: "eth", name: "Ethereum", symbol: "ETH" },
+  bnbusdt: { id: "bnb", name: "BNB", symbol: "BNB" },
+  solusdt: { id: "sol", name: "Solana", symbol: "SOL" },
+  xrpusdt: { id: "xrp", name: "XRP", symbol: "XRP" },
+  adausdt: { id: "ada", name: "Cardano", symbol: "ADA" },
+  dogeusdt: { id: "doge", name: "Dogecoin", symbol: "DOGE" },
+  trxusdt: { id: "trx", name: "TRON", symbol: "TRX" },
+  maticusdt: { id: "matic", name: "Polygon", symbol: "MATIC" },
+  linkusdt: { id: "link", name: "Chainlink", symbol: "LINK" },
+  ltcusdt: { id: "ltc", name: "Litecoin", symbol: "LTC" },
+  avaxusdt: { id: "avax", name: "Avalanche", symbol: "AVAX" },
+  dotusdt: { id: "dot", name: "Polkadot", symbol: "DOT" },
+  atomusdt: { id: "atom", name: "Cosmos", symbol: "ATOM" },
+};
+
 export default function MarketPage() {
-  const [coins, setCoins] = useState<Coin[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation();
+  const { marketData, status } = useBinanceWebSocket("ws://localhost:4000/ws/market");
 
-  useEffect(() => {
-    let isMounted = true;
+  // Transform WebSocket data to Coin array
+  const coins = useMemo(() => {
+    const result: Coin[] = [];
 
-    async function loadCoins() {
-      try {
-        setIsLoading(true);
-        setError(null);
+    marketData.forEach((priceData, symbol) => {
+      const metadata = COIN_METADATA[symbol];
+      if (!metadata) return;
 
-        const response = await fetch("http://localhost:4000/api/coins", {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
+      result.push({
+        id: metadata.id,
+        name: metadata.name,
+        symbol: metadata.symbol,
+        price: priceData.price,
+        priceChange: priceData.priceChange,
+        priceChangePercent: priceData.priceChangePercent,
+        volume: priceData.quoteVolume, // Use USDT volume for easier reading
+        trend: priceData.priceChange >= 0 ? "up" : "down",
+      });
+    });
 
-        if (!response.ok) {
-          throw new Error(`Failed to load coins (HTTP ${response.status})`);
-        }
+    return result;
+  }, [marketData]);
 
-        const data = (await response.json()) as Coin[];
-        if (isMounted) setCoins(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (isMounted) {
-          setError(e instanceof Error ? e.message : t("errors.failedLoadCoins"));
-          setCoins([]);
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
+  const isLoading = status === "connecting";
+  const error = status === "error" ? "WebSocket connection error" : null;
 
-    void loadCoins();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const priceFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
+  // Smart price formatter: adjusts decimals based on price value
+  const formatPrice = (price: number) => {
+    if (price >= 1) {
+      // For prices >= $1, show 2 decimals (e.g., $42,850.25)
+      return new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(price);
+    } else if (price >= 0.01) {
+      // For prices between $0.01 - $0.99, show 4 decimals (e.g., $0.1980)
+      return new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 4,
+        maximumFractionDigits: 4,
+      }).format(price);
+    } else {
+      // For very small prices < $0.01, show up to 8 decimals (e.g., $0.00000942)
+      return new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 2,
         maximumFractionDigits: 8,
-      }),
-    []
-  );
+      }).format(price);
+    }
+  };
+
+  // Format volume with abbreviations (K, M, B)
+  const formatVolume = (volume: number) => {
+    if (volume >= 1_000_000_000) {
+      return (volume / 1_000_000_000).toFixed(2) + "B";
+    } else if (volume >= 1_000_000) {
+      return (volume / 1_000_000).toFixed(2) + "M";
+    } else if (volume >= 1_000) {
+      return (volume / 1_000).toFixed(2) + "K";
+    } else {
+      return volume.toFixed(2);
+    }
+  };
 
   const changeFormatter = useMemo(
     () =>
       new Intl.NumberFormat(undefined, {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
+        maximumFractionDigits: 2,
       }),
     []
   );
@@ -82,9 +118,32 @@ export default function MarketPage() {
     []
   );
 
+  // Connection status indicator
+  const statusColor = {
+    connecting: "bg-yellow-500",
+    connected: "bg-green-500",
+    disconnected: "bg-gray-500",
+    error: "bg-red-500",
+  }[status];
+
+  const statusText = {
+    connecting: "Connecting...",
+    connected: "Live",
+    disconnected: "Disconnected",
+    error: "Error",
+  }[status];
+
   return (
     <main className="text-black">
-      <h1 className="text-lg font-semibold">{t("home.cryptoMarket")}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold">{t("home.cryptoMarket")}</h1>
+        
+        {/* Connection Status Indicator */}
+        <div className="flex items-center gap-2 text-sm">
+          <div className={`h-2 w-2 rounded-full ${statusColor}`}></div>
+          <span className="text-black/60">{statusText}</span>
+        </div>
+      </div>
 
       <div className="mt-4">
         {isLoading ? (
@@ -95,10 +154,11 @@ export default function MarketPage() {
           <table className="w-full text-sm">
             <thead className="border-b border-black/10">
               <tr className="text-left">
-                <th className="px-5 py-5 font-bold ">{t("table.coin")}</th>
-                <th className="px-5 py-5 font-bold">{t("table.priceUSD")}</th>
-                <th className="px-5 py-5 font-bold">{t("table.change")}</th>
-                <th className="px-5 py-5 font-bold ">{t("table.percent")}</th>
+                <th className="px-5 py-5 font-bold">{t("table.coin")}</th>
+                <th className="px-5 py-5 font-bold">Price</th>
+                <th className="px-5 py-5 font-bold">24h Change</th>
+                <th className="px-5 py-5 font-bold">24h Change %</th>
+                <th className="px-5 py-5 font-bold">24h Volume (USDT)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/10">
@@ -107,8 +167,8 @@ export default function MarketPage() {
                 const arrow = isUp ? "▲" : "▼";
                 const changeClass = isUp ? "text-green-600" : "text-red-600";
 
-                const changeSign = coin.change > 0 ? "+" : "";
-                const percentSign = coin.changePercent > 0 ? "+" : "";
+                const changeSign = coin.priceChange > 0 ? "+" : "";
+                const percentSign = coin.priceChangePercent > 0 ? "+" : "";
 
                 return (
                   <tr key={coin.id}>
@@ -130,22 +190,21 @@ export default function MarketPage() {
                       </Link>
                     </td>
                     <td className="px-5 py-1.5 font-medium">
-                      {priceFormatter.format(coin.price)}
+                      {formatPrice(coin.price)}
                     </td>
-                    <td
-                      className={`px-5 py-1.5 font-medium ${changeClass}`}
-                    >
+                    <td className={`px-5 py-1.5 font-medium ${changeClass}`}>
                       <span className="mr-1">{arrow}</span>
                       <span>
                         {changeSign}
-                        {changeFormatter.format(coin.change)}
+                        {changeFormatter.format(coin.priceChange)}
                       </span>
                     </td>
-                    <td
-                      className={`px-5 py-1.5 font-medium${changeClass}`}
-                    >
+                    <td className={`px-5 py-1.5 font-medium ${changeClass}`}>
                       {percentSign}
-                      {percentFormatter.format(coin.changePercent)}%
+                      {percentFormatter.format(coin.priceChangePercent)}%
+                    </td>
+                    <td className="px-5 py-1.5 font-medium text-black/70">
+                      ${formatVolume(coin.volume)}
                     </td>
                   </tr>
                 );
