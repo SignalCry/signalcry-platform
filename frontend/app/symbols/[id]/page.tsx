@@ -180,7 +180,7 @@ export default function CoinDetailsPage() {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-10">
         {/* Chart */}
         <section className="rounded border border-black/10 bg-white lg:col-span-7">
-          <div className="h-[60vh] sm:h-[65vh] lg:h-[70vh] min-h-[420px] w-full">
+          <div className="h-[60vh] sm:h-[65vh] lg:h-[70vh] min-h-105 w-full">
             <TradingViewWidget symbol={tvSymbol} theme="light" />
           </div>
         </section>
@@ -199,19 +199,19 @@ export default function CoinDetailsPage() {
             </div>
 
             <div className="max-h-[60vh] lg:max-h-[70vh] overflow-y-auto overflow-x-hidden">
-              <table className="w-full text-xs sm:text-sm">
+              <table className="w-full text-xs">
                 <thead className="sticky top-0 z-10 bg-white border-b border-black/10">
                   <tr className="text-left">
-                    <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
+                    <th className="px-1.5 py-1 font-medium">
                       {t("table.coin")}
                     </th>
-                    <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
+                    <th className="px-1.5 py-1 font-medium">
                       {t("table.price")}
                     </th>
-                    <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
+                    <th className="px-1.5 py-1 font-medium">
                       {t("table.change")}
                     </th>
-                    <th className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
+                    <th className="px-1.5 py-1 font-medium">
                       {t("table.percent")}
                     </th>
                   </tr>
@@ -225,27 +225,27 @@ export default function CoinDetailsPage() {
 
                     return (
                       <tr key={c.id} className="border-b border-black/10">
-                        <td className="px-2 sm:px-4 py-1.5 sm:py-2">
+                        <td className="px-1.5 py-1">
                           <div className="font-medium leading-tight">
                             <Link href={`/symbols/${c.id}`}>{c.name}</Link>
                           </div>
-                          <div className="text-[10px] sm:text-xs text-black/60">
+                          <div className="text-[10px] text-black/60">
                             {c.symbol}
                           </div>
                         </td>
 
-                        <td className="px-2 sm:px-4 py-1.5 sm:py-2 font-medium">
+                        <td className="px-1.5 py-1 font-medium">
                           {formatPrice(c.price)}
                         </td>
 
                         <td
-                          className={`px-2 sm:px-4 py-1.5 sm:py-2 font-medium ${cls}`}
+                          className={`px-1.5 py-1 font-medium ${cls}`}
                         >
                           {a} {changeFormatter.format(c.priceChange)}
                         </td>
 
                         <td
-                          className={`px-2 sm:px-4 py-1.5 sm:py-2 font-medium ${cls}`}
+                          className={`px-1.5 py-1 font-medium ${cls}`}
                         >
                           {percentFormatter.format(c.priceChangePercent)}%
                         </td>
