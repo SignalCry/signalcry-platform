@@ -7,10 +7,24 @@ import { useTranslation } from "@/src/i18n";
 type NewsItem = {
   id: string;
   title: string;
-  image: string;
+  image: string | null;
   excerpt: string;
   content: string;
+  source?: string;
+  publishedAt?: string;
+  url?: string;
 };
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function NewsArticlePage() {
   const params = useParams<{ id: string }>();
@@ -76,6 +90,21 @@ export default function NewsArticlePage() {
     <main className="min-h-screen space-y-4 p-6 text-black">
       <header className="flex flex-col items-center gap-3 text-center">
         <h1 className="text-2xl font-semibold leading-tight">{article.title}</h1>
+        {(article.source || article.publishedAt) && (
+          <p className="text-sm text-black/50">
+            {article.source}{article.source && article.publishedAt ? " · " : ""}{formatDate(article.publishedAt)}
+          </p>
+        )}
+        {article.url && (
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm underline underline-offset-2 text-black/60 hover:text-black"
+          >
+            {t("news.readOriginal")}
+          </a>
+        )}
       </header>
       <section className="relative w-full">
         <p className="text-lg leading-relaxed text-black filter blur-[3px] select-none">

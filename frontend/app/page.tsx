@@ -20,10 +20,25 @@ type Coin = {
 type NewsItem = {
   id: string;
   title: string;
-  image: string;
+  image: string | null;
   excerpt: string;
   content: string;
+  source?: string;
+  publishedAt?: string;
+  url?: string;
 };
+
+function timeAgo(dateStr?: string): string {
+  if (!dateStr) return "";
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export default function HomePage() {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -176,18 +191,25 @@ export default function HomePage() {
                     href={`/news/${item.id}`}
                     className="flex gap-3 transition-colors hover:text-black"
                   >
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      width={128}
-                      height={96}
-                      className="h-24 w-32 shrink-0 rounded object-cover"
-                    />
-                    <div>
-                      <h2 className="mb-2 text-base font-semibold leading-snug">
+                    {item.image && (
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        width={128}
+                        height={96}
+                        className="h-24 w-32 shrink-0 rounded object-cover"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <h2 className="mb-1 text-base font-semibold leading-snug">
                         {item.title}
                       </h2>
-                      <p className="text-sm leading-relaxed text-black/80">
+                      {(item.source || item.publishedAt) && (
+                        <p className="mb-1 text-xs text-black/50">
+                          {item.source}{item.source && item.publishedAt ? " · " : ""}{timeAgo(item.publishedAt)}
+                        </p>
+                      )}
+                      <p className="text-sm leading-relaxed text-black/80 line-clamp-2">
                         {item.excerpt}
                       </p>
                     </div>

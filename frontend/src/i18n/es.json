@@ -40,6 +40,7 @@
     "notFound": "Artículo no encontrado.",
     "unlockMessage": "Paga para desbloquear el artículo completo",
     "price": "Solo €0.99",
-    "unlockButton": "Desbloquear por €0.99"
+    "unlockButton": "Desbloquear por €0.99",
+    "readOriginal": "Leer artículo original ↗"
   }
 }

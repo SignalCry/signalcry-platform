@@ -40,6 +40,7 @@
     "notFound": "Article not found.",
     "unlockMessage": "Pay to unlock full article",
     "price": "Only €0.99",
-    "unlockButton": "Unlock for €0.99"
+    "unlockButton": "Unlock for €0.99",
+    "readOriginal": "Read original article ↗"
   }
 }
