@@ -24,6 +24,9 @@ export default function Navbar() {
           <Link href="/" className="hover:underline underline-offset-4">
             {t("navbar.home")}
           </Link>
+          <Link href="/news" className="hover:underline underline-offset-4">
+            {t("navbar.news")}
+          </Link>
           <Link href="/market" className="hover:underline underline-offset-4">
             {t("navbar.market")}
           </Link>
@@ -58,6 +61,9 @@ export default function Navbar() {
             <div className="flex flex-col gap-3">
               <Link href="/" onClick={() => setIsOpen(false)}>
                 {t("navbar.home")}
+              </Link>
+              <Link href="/news" onClick={() => setIsOpen(false)}>
+                {t("navbar.news")}
               </Link>
               <Link href="/market" onClick={() => setIsOpen(false)}>
                 {t("navbar.market")}

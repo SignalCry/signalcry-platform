@@ -175,14 +175,22 @@ export default function HomePage() {
     <main className="flex flex-col gap-6 lg:flex-row">
       <section className="w-full lg:w-3/5">
         <div className=" text-black">
-          <div className="px-3 py-2 text-sm font-semibold">{t("home.latestNews")}</div>
+          <div className="flex items-center justify-between px-3 py-2">
+            <span className="text-sm font-semibold">{t("home.latestNews")}</span>
+            <Link
+              href="/news"
+              className="text-gray-500 hover:text-gray-700 underline underline-offset-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-gray-300 flex items-center gap-1"
+            >
+              {t("common.viewAll")} <span aria-hidden="true">&rarr;</span>
+            </Link>
+          </div>
           {newsLoading ? (
             <div className="px-3 pb-2 text-sm">{t("common.loading")}</div>
           ) : newsError ? (
             <div className="px-3 pb-2 text-sm">{newsError}</div>
           ) : (
             <div className="space-y-6">
-              {news.map((item) => (
+              {news.slice(0, 5).map((item) => (
                 <article
                   key={item.id}
                   className="border-b border-black/10 pb-4 last:border-b-0 last:pb-0"

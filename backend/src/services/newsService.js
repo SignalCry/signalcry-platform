@@ -1,4 +1,5 @@
 const Parser = require("rss-parser");
+const cheerio = require("cheerio");
 const staticNews = require("../data/news");
 
 const parser = new Parser({
@@ -18,12 +19,11 @@ const FEEDS = [
   { url: "https://decrypt.co/feed", source: "Decrypt" },
 ];
 
-// In-memory cache
-let cache = {
-  data: null,
-  timestamp: 0,
-};
+// In-memory caches
+let cache = { data: null, timestamp: 0 };
+const articleCache = new Map(); // url -> { content, scrapedAt }
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const ARTICLE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
 /**
  * Extract the best available image from a feed item.
@@ -107,6 +107,12 @@ async function fetchAllNews() {
   // Filter out items without a title
   articles = articles.filter((a) => a.title);
 
+  // Keep only crypto-related articles
+  const CRYPTO_KEYWORDS = /\b(crypto|bitcoin|btc|ethereum|eth|blockchain|defi|nft|token|altcoin|stablecoin|web3|mining|halving|solana|cardano|xrp|ripple|binance|coinbase|exchange|wallet|ledger|dex|dao|airdrop|memecoin|layer.?2|rollup)\b/i;
+  articles = articles.filter(
+    (a) => CRYPTO_KEYWORDS.test(a.title) || CRYPTO_KEYWORDS.test(a.excerpt)
+  );
+
   // Sort by date (newest first)
   articles.sort(
     (a, b) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime()
@@ -156,4 +162,106 @@ async function getNews() {
   }
 }
 
-module.exports = { getNews };
+/**
+ * Scrape full article content from the source URL.
+ */
+async function scrapeArticle(url) {
+  // Check cache first
+  const cached = articleCache.get(url);
+  if (cached && Date.now() - cached.scrapedAt < ARTICLE_CACHE_TTL) {
+    return cached.content;
+  }
+
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml",
+    },
+    signal: AbortSignal.timeout(15000),
+  });
+
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+  const html = await res.text();
+  const $ = cheerio.load(html);
+
+  // Remove noise elements
+  $(
+    "script, style, nav, footer, header, aside, iframe, figure, figcaption, " +
+    ".ad, .ads, .advert, .sidebar, .social, .share, .related, .comments, " +
+    ".newsletter, .subscribe, .popup, .modal, .banner, [role=navigation], " +
+    ".article-tags, .tags, .breadcrumb"
+  ).remove();
+
+  // Source-specific selectors (most reliable)
+  const SOURCE_SELECTORS = [
+    ".at-body",                          // CoinDesk
+    ".article-body",                     // CoinDesk alt
+    ".post-content",                     // CoinTelegraph / Decrypt
+    ".article__body",                    // CoinTelegraph alt
+    '[class*="ArticleBody"]',            // CoinDesk React
+    '[class*="article-detail"]',         // CoinTelegraph React
+    ".entry-content",                    // WordPress-based
+    "article",                           // Generic semantic
+    "[role=article]",                    // ARIA
+    "main",                              // Fallback
+  ];
+
+  let paragraphs = [];
+
+  for (const selector of SOURCE_SELECTORS) {
+    const container = $(selector).first();
+    if (!container.length) continue;
+
+    container.find("p").each((_, el) => {
+      const text = $(el).text().trim();
+      if (text.length > 40) paragraphs.push(text);
+    });
+
+    if (paragraphs.length >= 3) break;
+    paragraphs = []; // reset and try next selector
+  }
+
+  // Last resort: all <p> in body with meaningful length
+  if (paragraphs.length < 3) {
+    paragraphs = [];
+    $("body p").each((_, el) => {
+      const text = $(el).text().trim();
+      if (text.length > 40) paragraphs.push(text);
+    });
+  }
+
+  const content = paragraphs.join("\n\n");
+
+  // Cache result
+  articleCache.set(url, { content, scrapedAt: Date.now() });
+
+  return content;
+}
+
+/**
+ * Get a single article by ID with full scraped content.
+ */
+async function getArticle(id) {
+  const articles = await getNews();
+  const article = articles.find((a) => a.id === id);
+  if (!article) return null;
+
+  // If we have a URL, scrape the full content
+  if (article.url) {
+    try {
+      const fullContent = await scrapeArticle(article.url);
+      if (fullContent && fullContent.length > article.content.length) {
+        return { ...article, content: fullContent };
+      }
+    } catch (err) {
+      console.warn(`[newsService] Scrape failed for ${article.url}: ${err.message}`);
+    }
+  }
+
+  // Return article with RSS content as fallback
+  return article;
+}
+
+module.exports = { getNews, getArticle };

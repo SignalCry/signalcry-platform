@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { useTranslation } from "@/src/i18n";
 
 type NewsItem = {
@@ -44,20 +45,25 @@ export default function NewsArticlePage() {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch("http://localhost:4000/api/news", {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
+        const response = await fetch(
+          `http://localhost:4000/api/news/${articleId}`,
+          {
+            method: "GET",
+            headers: { Accept: "application/json" },
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`Failed to load article (HTTP ${response.status})`);
         }
 
-        const data = (await response.json()) as NewsItem[];
-        const found = data.find((item) => item.id === articleId) ?? null;
-        if (isMounted) setArticle(found);
+        const data = (await response.json()) as NewsItem;
+        if (isMounted) setArticle(data);
       } catch (err) {
-        if (isMounted) setError(err instanceof Error ? err.message : t("errors.failedLoadArticle"));
+        if (isMounted)
+          setError(
+            err instanceof Error ? err.message : t("errors.failedLoadArticle")
+          );
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -72,7 +78,7 @@ export default function NewsArticlePage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen p-4 text-black">
+      <main className="min-h-screen p-6 text-black">
         <p>{t("common.loading")}</p>
       </main>
     );
@@ -80,44 +86,47 @@ export default function NewsArticlePage() {
 
   if (error || !article) {
     return (
-      <main className="min-h-screen p-4 text-black">
+      <main className="min-h-screen p-6 text-black">
         <p>{error ?? t("news.notFound")}</p>
       </main>
     );
   }
 
+  const paragraphs = article.content
+    .split("\n\n")
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
+
   return (
-    <main className="min-h-screen space-y-4 p-6 text-black">
-      <header className="flex flex-col items-center gap-3 text-center">
-        <h1 className="text-2xl font-semibold leading-tight">{article.title}</h1>
+    <main className="min-h-screen p-6 text-black">
+      <div className="mx-auto max-w-2xl">
+        <Link
+          href="/news"
+          className="mb-6 inline-block text-sm text-black/50 hover:text-black"
+        >
+          &larr; {t("news.backToNews")}
+        </Link>
+
+        <h1 className="mb-3 text-2xl font-semibold leading-tight">
+          {article.title}
+        </h1>
+
         {(article.source || article.publishedAt) && (
-          <p className="text-sm text-black/50">
-            {article.source}{article.source && article.publishedAt ? " · " : ""}{formatDate(article.publishedAt)}
+          <p className="mb-6 text-sm text-black/40">
+            {article.source}
+            {article.source && article.publishedAt ? " · " : ""}
+            {formatDate(article.publishedAt)}
           </p>
         )}
-        {article.url && (
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm underline underline-offset-2 text-black/60 hover:text-black"
-          >
-            {t("news.readOriginal")}
-          </a>
-        )}
-      </header>
-      <section className="relative w-full">
-        <p className="text-lg leading-relaxed text-black filter blur-[3px] select-none">
-          {article.content}
-        </p>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-          <p className="text-base font-medium">{t("news.unlockMessage")}</p>
-          <p className="text-sm text-black/70">{t("news.price")}</p>
-          <button className="pointer-events-auto mt-3 rounded border border-black bg-black px-4 py-1.5 text-sm font-medium text-white">
-            {t("news.unlockButton")}
-          </button>
-        </div>
-      </section>
+
+        <article className="space-y-4">
+          {paragraphs.map((p, i) => (
+            <p key={i} className="text-base leading-relaxed text-black/85">
+              {p}
+            </p>
+          ))}
+        </article>
+      </div>
     </main>
   );
 }
