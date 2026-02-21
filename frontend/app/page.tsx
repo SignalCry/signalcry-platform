@@ -32,7 +32,9 @@ export default function HomePage() {
   const { t } = useTranslation();
   
   // Use WebSocket for live crypto data
-  const { marketData, status } = useBinanceWebSocket("ws://localhost:4000/ws/market");
+  const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000";
+  const marketWsUrl = `${wsBaseUrl.replace(/\/$/, "")}/ws/market`;
+  const { marketData, status } = useBinanceWebSocket(marketWsUrl);
 
   // Mapping of Binance symbols to coin metadata (same as market page)
   const COIN_METADATA: Record<string, { id: string; name: string; symbol: string }> = {
