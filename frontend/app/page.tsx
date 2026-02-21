@@ -77,7 +77,7 @@ export default function HomePage() {
   }, [marketData]);
 
   const isLoading = status === "connecting";
-  const error = status === "error" ? "WebSocket connection error" : null;
+  const error = status === "error" ? t("errors.websocketConnection") : null;
 
   useEffect(() => {
     let isMounted = true;
