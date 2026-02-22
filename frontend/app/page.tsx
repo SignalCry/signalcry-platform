@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslation } from "../src/i18n";
 import Image from "next/image";
 import { useBinanceWebSocket } from "../src/hooks/useBinanceWebSocket";
+import { COIN_METADATA } from "../src/constants/coinMetadata";
 import { useEffect, useState } from "react";
 
 // Pre-built formatters reused across all formatPrice calls to avoid
@@ -50,24 +51,6 @@ export default function HomePage() {
   const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000";
   const marketWsUrl = `${wsBaseUrl.replace(/\/$/, "")}/ws/market`;
   const { marketData, status } = useBinanceWebSocket(marketWsUrl);
-
-  // Mapping of Binance symbols to coin metadata (same as market page)
-  const COIN_METADATA: Record<string, { id: string; name: string; symbol: string }> = {
-    btcusdt: { id: "btc", name: "Bitcoin", symbol: "BTC" },
-    ethusdt: { id: "eth", name: "Ethereum", symbol: "ETH" },
-    bnbusdt: { id: "bnb", name: "BNB", symbol: "BNB" },
-    solusdt: { id: "sol", name: "Solana", symbol: "SOL" },
-    xrpusdt: { id: "xrp", name: "XRP", symbol: "XRP" },
-    adausdt: { id: "ada", name: "Cardano", symbol: "ADA" },
-    dogeusdt: { id: "doge", name: "Dogecoin", symbol: "DOGE" },
-    trxusdt: { id: "trx", name: "TRON", symbol: "TRX" },
-    maticusdt: { id: "matic", name: "Polygon", symbol: "MATIC" },
-    linkusdt: { id: "link", name: "Chainlink", symbol: "LINK" },
-    ltcusdt: { id: "ltc", name: "Litecoin", symbol: "LTC" },
-    avaxusdt: { id: "avax", name: "Avalanche", symbol: "AVAX" },
-    dotusdt: { id: "dot", name: "Polkadot", symbol: "DOT" },
-    atomusdt: { id: "atom", name: "Cosmos", symbol: "ATOM" },
-  };
 
   // Transform WebSocket data to Coin array
   const coins = useMemo(() => {
