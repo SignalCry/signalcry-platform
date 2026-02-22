@@ -1,6 +1,7 @@
 {
   "navbar": {
     "home": "Inicio",
+    "news": "Noticias",
     "market": "Mercado"
   },
   "footer": {
@@ -38,8 +39,7 @@
   "news": {
     "loading": "Cargando…",
     "notFound": "Artículo no encontrado.",
-    "unlockMessage": "Paga para desbloquear el artículo completo",
-    "price": "Solo €0.99",
-    "unlockButton": "Desbloquear por €0.99"
+    "allNews": "Noticias Crypto",
+    "backToNews": "Volver a noticias"
   }
 }
