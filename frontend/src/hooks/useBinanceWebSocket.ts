@@ -99,7 +99,9 @@ export function useBinanceWebSocket(url: string) {
               console.log("[WebSocket] 🔌 STATUS UPDATE:", serverStatus);
               if (serverStatus === "connected") {
                 setStatus("connected");
-              } else if (serverStatus === "disconnected" || serverStatus === "error") {
+              } else if (serverStatus === "disconnected") {
+                setStatus("disconnected");
+              } else if (serverStatus === "error") {
                 setStatus("error");
               }
             }
