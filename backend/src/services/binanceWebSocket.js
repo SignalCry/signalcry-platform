@@ -1,8 +1,8 @@
 const WebSocket = require("ws");
 
 /**
- * Binance Futures WebSocket Service
- * Connects to Binance Futures mark price streams and broadcasts to all connected clients
+ * Binance Spot WebSocket Service
+ * Connects to Binance Spot ticker streams and broadcasts to all connected clients
  */
 class BinanceWebSocketService {
   constructor() {
@@ -57,11 +57,11 @@ class BinanceWebSocketService {
     const streams = this.tradingPairs
       .map((pair) => `${pair}@ticker`)
       .join("/");
-    return `wss://fstream.binance.com/stream?streams=${streams}`;
+    return `wss://stream.binance.com:9443/stream?streams=${streams}`;
   }
 
   /**
-   * Connect to Binance Futures WebSocket
+   * Connect to Binance Spot WebSocket
    */
   connectToBinance() {
     if (this.isConnecting || (this.binanceWs && this.binanceWs.readyState === WebSocket.OPEN)) {
