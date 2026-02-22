@@ -5,7 +5,23 @@ import Link from "next/link";
 import { useTranslation } from "../src/i18n";
 import Image from "next/image";
 import { useBinanceWebSocket } from "../src/hooks/useBinanceWebSocket";
+import { COIN_METADATA } from "../src/constants/coinMetadata";
 import { useEffect, useState } from "react";
+
+// Pre-built formatters reused across all formatPrice calls to avoid
+// creating a new Intl.NumberFormat instance on every render cycle.
+const priceFormatter2dp = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const priceFormatter4dp = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
+});
+const priceFormatter8dp = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 8,
+});
 
 type Coin = {
   id: string;
@@ -47,25 +63,9 @@ export default function HomePage() {
   const { t } = useTranslation();
   
   // Use WebSocket for live crypto data
-  const { marketData, status } = useBinanceWebSocket("ws://localhost:4000/ws/market");
-
-  // Mapping of Binance symbols to coin metadata (same as market page)
-  const COIN_METADATA: Record<string, { id: string; name: string; symbol: string }> = {
-    btcusdt: { id: "btc", name: "Bitcoin", symbol: "BTC" },
-    ethusdt: { id: "eth", name: "Ethereum", symbol: "ETH" },
-    bnbusdt: { id: "bnb", name: "BNB", symbol: "BNB" },
-    solusdt: { id: "sol", name: "Solana", symbol: "SOL" },
-    xrpusdt: { id: "xrp", name: "XRP", symbol: "XRP" },
-    adausdt: { id: "ada", name: "Cardano", symbol: "ADA" },
-    dogeusdt: { id: "doge", name: "Dogecoin", symbol: "DOGE" },
-    trxusdt: { id: "trx", name: "TRON", symbol: "TRX" },
-    maticusdt: { id: "matic", name: "Polygon", symbol: "MATIC" },
-    linkusdt: { id: "link", name: "Chainlink", symbol: "LINK" },
-    ltcusdt: { id: "ltc", name: "Litecoin", symbol: "LTC" },
-    avaxusdt: { id: "avax", name: "Avalanche", symbol: "AVAX" },
-    dotusdt: { id: "dot", name: "Polkadot", symbol: "DOT" },
-    atomusdt: { id: "atom", name: "Cosmos", symbol: "ATOM" },
-  };
+  const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000";
+  const marketWsUrl = `${wsBaseUrl.replace(/\/$/, "")}/ws/market`;
+  const { marketData, status } = useBinanceWebSocket(marketWsUrl);
 
   // Transform WebSocket data to Coin array
   const coins = useMemo(() => {
@@ -90,7 +90,7 @@ export default function HomePage() {
   }, [marketData]);
 
   const isLoading = status === "connecting";
-  const error = status === "error" ? "WebSocket connection error" : null;
+  const error = status === "error" ? t("errors.websocketConnection") : null;
 
   useEffect(() => {
     let isMounted = true;
@@ -132,22 +132,13 @@ export default function HomePage() {
   const formatPrice = (price: number) => {
     if (price >= 1) {
       // For prices >= $1, show 2 decimals (e.g., $42,850.25)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(price);
+      return priceFormatter2dp.format(price);
     } else if (price >= 0.01) {
       // For prices between $0.01 - $0.99, show 4 decimals (e.g., $0.1980)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      }).format(price);
+      return priceFormatter4dp.format(price);
     } else {
       // For very small prices < $0.01, show up to 8 decimals (e.g., $0.00000942)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
-      }).format(price);
+      return priceFormatter8dp.format(price);
     }
   };
 
