@@ -30,6 +30,12 @@ class BinanceWebSocketService {
       "avaxusdt",
       "dotusdt",
       "atomusdt",
+      "usdtusdt",
+      "usdcusdt",
+      "suiusdt",
+      "tonusdt",
+      "hbarusdt",
+      "nearusdt",
     ];
 
     // Initialize with default data structure
