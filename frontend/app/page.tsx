@@ -7,6 +7,21 @@ import Image from "next/image";
 import { useBinanceWebSocket } from "../src/hooks/useBinanceWebSocket";
 import { useEffect, useState } from "react";
 
+// Pre-built formatters reused across all formatPrice calls to avoid
+// creating a new Intl.NumberFormat instance on every render cycle.
+const priceFormatter2dp = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const priceFormatter4dp = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
+});
+const priceFormatter8dp = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 8,
+});
+
 type Coin = {
   id: string;
   name: string;
@@ -119,22 +134,13 @@ export default function HomePage() {
   const formatPrice = (price: number) => {
     if (price >= 1) {
       // For prices >= $1, show 2 decimals (e.g., $42,850.25)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(price);
+      return priceFormatter2dp.format(price);
     } else if (price >= 0.01) {
       // For prices between $0.01 - $0.99, show 4 decimals (e.g., $0.1980)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      }).format(price);
+      return priceFormatter4dp.format(price);
     } else {
       // For very small prices < $0.01, show up to 8 decimals (e.g., $0.00000942)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
-      }).format(price);
+      return priceFormatter8dp.format(price);
     }
   };
 
