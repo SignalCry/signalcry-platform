@@ -1,17 +1,35 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useTranslation } from "../src/i18n";
 import Image from "next/image";
+import { useBinanceWebSocket } from "../src/hooks/useBinanceWebSocket";
+import { COIN_METADATA } from "../src/constants/coinMetadata";
+import { useEffect, useState } from "react";
+
+// Pre-built formatters reused across all formatPrice calls to avoid
+// creating a new Intl.NumberFormat instance on every render cycle.
+const priceFormatter2dp = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const priceFormatter4dp = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
+});
+const priceFormatter8dp = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 8,
+});
 
 type Coin = {
   id: string;
   name: string;
   symbol: string;
   price: number;
-  change: number;
-  changePercent: number;
+  priceChange: number;
+  priceChangePercent: number;
   trend: "up" | "down";
 };
 
@@ -24,49 +42,40 @@ type NewsItem = {
 };
 
 export default function HomePage() {
-  const [coins, setCoins] = useState<Coin[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [newsError, setNewsError] = useState<string | null>(null);
   const { t } = useTranslation();
+  
+  // Use WebSocket for live crypto data
+  const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000";
+  const marketWsUrl = `${wsBaseUrl.replace(/\/$/, "")}/ws/market`;
+  const { marketData, status } = useBinanceWebSocket(marketWsUrl);
 
-  useEffect(() => {
-    let isMounted = true;
+  // Transform WebSocket data to Coin array
+  const coins = useMemo(() => {
+    const result: Coin[] = [];
 
-    async function loadCoins() {
-      try {
-        setIsLoading(true);
-        setError(null);
+    marketData.forEach((priceData, symbol) => {
+      const metadata = COIN_METADATA[symbol];
+      if (!metadata) return;
 
-        const response = await fetch("http://localhost:4000/api/coins", {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
+      result.push({
+        id: metadata.id,
+        name: metadata.name,
+        symbol: metadata.symbol,
+        price: priceData.price,
+        priceChange: priceData.priceChange,
+        priceChangePercent: priceData.priceChangePercent,
+        trend: priceData.priceChange >= 0 ? "up" : "down",
+      });
+    });
 
-        if (!response.ok) {
-          throw new Error(`Failed to load coins (HTTP ${response.status})`);
-        }
+    return result;
+  }, [marketData]);
 
-        const data = (await response.json()) as Coin[];
-        if (isMounted) setCoins(Array.isArray(data) ? data : []);
-      } catch (e) {
-        if (isMounted) {
-          setError(e instanceof Error ? e.message : t("errors.failedLoadCoins"));
-          setCoins([]);
-        }
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    void loadCoins();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const isLoading = status === "connecting";
+  const error = status === "error" ? t("errors.websocketConnection") : null;
 
   useEffect(() => {
     let isMounted = true;
@@ -104,19 +113,25 @@ export default function HomePage() {
     };
   }, []);
 
-  const priceFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        maximumFractionDigits: 8,
-      }),
-    []
-  );
+  // Smart price formatter: adjusts decimals based on price value
+  const formatPrice = (price: number) => {
+    if (price >= 1) {
+      // For prices >= $1, show 2 decimals (e.g., $42,850.25)
+      return priceFormatter2dp.format(price);
+    } else if (price >= 0.01) {
+      // For prices between $0.01 - $0.99, show 4 decimals (e.g., $0.1980)
+      return priceFormatter4dp.format(price);
+    } else {
+      // For very small prices < $0.01, show up to 8 decimals (e.g., $0.00000942)
+      return priceFormatter8dp.format(price);
+    }
+  };
 
   const changeFormatter = useMemo(
     () =>
       new Intl.NumberFormat(undefined, {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
+        maximumFractionDigits: 2,
       }),
     []
   );
@@ -207,8 +222,8 @@ export default function HomePage() {
                   const arrow = isUp ? "▲" : "▼";
                   const changeClass = isUp ? "text-green-600" : "text-red-600";
 
-                  const changeSign = coin.change > 0 ? "+" : "";
-                  const percentSign = coin.changePercent > 0 ? "+" : "";
+                  const changeSign = coin.priceChange > 0 ? "+" : "";
+                  const percentSign = coin.priceChangePercent > 0 ? "+" : "";
 
                   const isLast = idx === visibleCoins.length - 1;
                   return (
@@ -237,18 +252,18 @@ export default function HomePage() {
                         </div>
                       </td>
                       <td className="px-5 py-1 font-medium">
-                        {priceFormatter.format(coin.price)}
+                        {formatPrice(coin.price)}
                       </td>
                       <td className={`px-5 py-1 font-medium ${changeClass}`}>
                         <span className="mr-1">{arrow}</span>
                         <span>
                           {changeSign}
-                          {changeFormatter.format(coin.change)}
+                          {changeFormatter.format(coin.priceChange)}
                         </span>
                       </td>
                       <td className={`px-5 py-1 font-medium ${changeClass}`}>
                         {percentSign}
-                        {percentFormatter.format(coin.changePercent)}%
+                        {percentFormatter.format(coin.priceChangePercent)}%
                       </td>
                     </tr>
                   );
