@@ -19,6 +19,8 @@ export type PriceUpdate = {
 
 export type MarketData = Map<string, PriceUpdate>;
 
+const isDev = process.env.NODE_ENV !== "production";
+
 export function useBinanceWebSocket(url: string) {
   const [marketData, setMarketData] = useState<MarketData>(new Map());
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
@@ -54,38 +56,44 @@ export function useBinanceWebSocket(url: string) {
           try {
             const message = JSON.parse(event.data);
 
-            // 🔍 DEBUG: Log all received messages
-            console.log("[WebSocket] 📨 RAW MESSAGE:", message);
+            if (isDev) {
+              console.log("[WebSocket] 📨 RAW MESSAGE:", message);
+            }
 
             if (message.type === "snapshot" && Array.isArray(message.data)) {
               // Initial snapshot of all prices
-              console.log("[WebSocket] 📊 SNAPSHOT received with", message.data.length, "items");
-              console.log("[WebSocket] 📋 First item structure:", message.data[0]);
-              
+              if (isDev) {
+                console.log("[WebSocket] 📊 SNAPSHOT received with", message.data.length, "items");
+                console.log("[WebSocket] 📋 First item structure:", message.data[0]);
+              }
+
               const newData = new Map<string, PriceUpdate>();
               message.data.forEach((item: PriceUpdate) => {
                 // Fix: Normalize symbol to lowercase for consistent lookup
                 const normalizedSymbol = item.symbol.toLowerCase();
                 newData.set(normalizedSymbol, item);
               });
-              
-              console.log("[WebSocket] ✅ Snapshot processed. Keys:", Array.from(newData.keys()));
+
+              if (isDev) {
+                console.log("[WebSocket] ✅ Snapshot processed. Keys:", Array.from(newData.keys()));
+              }
               setMarketData(newData);
             } else if (message.type === "price_update" && message.data) {
               // Real-time price update
               const update: PriceUpdate = message.data;
-              
-              // 🔍 DEBUG: Log each price update
-              console.log("[WebSocket] 💹 PRICE UPDATE:", {
-                symbol: update.symbol,
-                price: update.price,
-                priceChange: update.priceChange,
-                priceChangePercent: update.priceChangePercent,
-                volume: update.volume,
-                quoteVolume: update.quoteVolume,
-                allFields: update // Show all available fields
-              });
-              
+
+              if (isDev) {
+                console.log("[WebSocket] 💹 PRICE UPDATE:", {
+                  symbol: update.symbol,
+                  price: update.price,
+                  priceChange: update.priceChange,
+                  priceChangePercent: update.priceChangePercent,
+                  volume: update.volume,
+                  quoteVolume: update.quoteVolume,
+                  allFields: update,
+                });
+              }
+
               setMarketData((prev) => {
                 const newData = new Map(prev);
                 // Fix: Normalize symbol to lowercase for consistent lookup
@@ -96,7 +104,9 @@ export function useBinanceWebSocket(url: string) {
             } else if (message.type === "status" && message.data?.status) {
               // Server status update
               const serverStatus = message.data.status;
-              console.log("[WebSocket] 🔌 STATUS UPDATE:", serverStatus);
+              if (isDev) {
+                console.log("[WebSocket] 🔌 STATUS UPDATE:", serverStatus);
+              }
               if (serverStatus === "connected") {
                 setStatus("connected");
               } else if (serverStatus === "disconnected") {
