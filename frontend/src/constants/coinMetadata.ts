@@ -14,4 +14,9 @@ export const COIN_METADATA: Record<string, { id: string; name: string; symbol: s
   avaxusdt: { id: "avax", name: "Avalanche", symbol: "AVAX" },
   dotusdt: { id: "dot", name: "Polkadot", symbol: "DOT" },
   atomusdt: { id: "atom", name: "Cosmos", symbol: "ATOM" },
+  usdcusdt: { id: "usdc", name: "USD Coin", symbol: "USDC" },
+  suiusdt: { id: "sui", name: "Sui", symbol: "SUI" },
+  tonusdt: { id: "ton", name: "Toncoin", symbol: "TON" },
+  hbarusdt: { id: "hbar", name: "Hedera", symbol: "HBAR" },
+  nearusdt: { id: "near", name: "NEAR Protocol", symbol: "NEAR" },
 };
