@@ -30,7 +30,7 @@ class BinanceWebSocketService {
       "avaxusdt",
       "dotusdt",
       "atomusdt",
-      "usdtusdt",
+      "usdtbtc",
       "usdcusdt",
       "suiusdt",
       "tonusdt",
