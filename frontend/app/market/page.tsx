@@ -50,24 +50,25 @@ export default function MarketPage() {
   // Smart price formatter: adjusts decimals based on price value
   const formatPrice = (price: number) => {
     if (price >= 1) {
-      // For prices >= $1, show 2 decimals (e.g., $42,850.25)
+      // For prices >= $1, show 2-4 decimals to avoid .00 when there's precision
       return new Intl.NumberFormat(undefined, {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        maximumFractionDigits: 4,
       }).format(price);
-    } else if (price >= 0.01) {
-      // For prices between $0.01 - $0.99, show 4 decimals (e.g., $0.1980)
+    } else if (price >= 0.001) {
+      // For prices $0.001 - $0.999, show 4 decimals
       return new Intl.NumberFormat(undefined, {
         minimumFractionDigits: 4,
         maximumFractionDigits: 4,
       }).format(price);
-    } else {
-      // For very small prices < $0.01, show up to 8 decimals (e.g., $0.00000942)
+    } else if (price > 0) {
+      // For very small prices, show up to 10 decimals to see actual value
       return new Intl.NumberFormat(undefined, {
         minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
+        maximumFractionDigits: 10,
       }).format(price);
     }
+    return "0.00";
   };
 
   // Format volume with abbreviations (K, M, B)
@@ -83,14 +84,23 @@ export default function MarketPage() {
     }
   };
 
-  const changeFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
+  const formatChange = (change: number) => {
+    const absChange = Math.abs(change);
+    if (absChange >= 0.01) {
+      // For changes >= 0.01, show 2 decimals
+      return new Intl.NumberFormat(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      }),
-    []
-  );
+      }).format(change);
+    } else if (absChange > 0) {
+      // For very small changes, show up to 6 decimals
+      return new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6,
+      }).format(change);
+    }
+    return "0.00";
+  };
 
   const percentFormatter = useMemo(
     () =>
@@ -179,7 +189,7 @@ export default function MarketPage() {
                       <span className="mr-1">{arrow}</span>
                       <span>
                         {changeSign}
-                        {changeFormatter.format(coin.priceChange)}
+                        {formatChange(coin.priceChange)}
                       </span>
                     </td>
                     <td className={`px-5 py-1.5 font-medium ${changeClass}`}>
