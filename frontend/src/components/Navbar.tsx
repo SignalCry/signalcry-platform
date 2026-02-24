@@ -27,6 +27,9 @@ export default function Navbar() {
           <Link href="/news" className="hover:underline underline-offset-4">
             {t("navbar.news")}
           </Link>
+          <Link href="/indicators" className="hover:underline underline-offset-4">
+            {t("navbar.indicators")}
+          </Link>
           <Link href="/market" className="hover:underline underline-offset-4">
             {t("navbar.market")}
           </Link>
@@ -64,6 +67,9 @@ export default function Navbar() {
               </Link>
               <Link href="/news" onClick={() => setIsOpen(false)}>
                 {t("navbar.news")}
+              </Link>
+              <Link href="/indicators" onClick={() => setIsOpen(false)}>
+                {t("navbar.indicators")}
               </Link>
               <Link href="/market" onClick={() => setIsOpen(false)}>
                 {t("navbar.market")}

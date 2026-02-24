@@ -2,6 +2,7 @@
   "navbar": {
     "home": "Home",
     "news": "News",
+    "indicators": "Indicators",
     "market": "Market"
   },
   "footer": {
@@ -29,7 +30,8 @@
   "errors": {
     "failedLoadCoins": "Failed to load coins",
     "failedLoadNews": "Failed to load news",
-    "failedLoadArticle": "Failed to load article"
+    "failedLoadArticle": "Failed to load article",
+    "failedLoadIndicators": "Failed to load indicators"
   },
   "symbols": {
     "loading": "Loading…",
@@ -41,5 +43,12 @@
     "notFound": "Article not found.",
     "allNews": "Crypto News",
     "backToNews": "Back to news"
+  },
+  "indicators": {
+    "title": "Technical Indicators",
+    "ema": "Moving Averages",
+    "rsi": "RSI",
+    "macd": "MACD",
+    "bb": "Bollinger Bands"
   }
 }
