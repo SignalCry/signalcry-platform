@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { useBinanceWebSocket } from "@/src/hooks/useBinanceWebSocket";
 import { COIN_METADATA } from "@/src/constants/coinMetadata";
+import { formatPrice, formatChange, formatPercent } from "@/src/utils/formatters";
 
 type Coin = {
   id: string;
@@ -55,57 +56,6 @@ export default function CoinDetailsPage() {
 
   const isLoading = status === "connecting";
   const error = status === "error" ? "WebSocket connection error" : null;
-
-  // Smart price formatter: adjusts decimals based on price value
-  const formatPrice = (price: number) => {
-    if (price >= 1) {
-      // For prices >= $1, show 2-4 decimals to avoid .00 when there's precision
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 4,
-      }).format(price);
-    } else if (price >= 0.001) {
-      // For prices $0.001 - $0.999, show 4 decimals
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      }).format(price);
-    } else if (price > 0) {
-      // For very small prices, show up to 10 decimals to see actual value
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 10,
-      }).format(price);
-    }
-    return "0.00";
-  };
-
-  const formatChange = (change: number) => {
-    const absChange = Math.abs(change);
-    if (absChange >= 0.01) {
-      // For changes >= 0.01, show 2 decimals
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(change);
-    } else if (absChange > 0) {
-      // For very small changes, show up to 6 decimals
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 6,
-      }).format(change);
-    }
-    return "0.00";
-  };
-
-  const percentFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
 
   if (isLoading) {
     return (
@@ -163,7 +113,7 @@ export default function CoinDetailsPage() {
           <div>
             <div className="text-xs text-black/60">{t("table.percent")}</div>
             <div className={`font-semibold ${changeClass}`}>
-              {percentFormatter.format(coin.priceChangePercent)}%
+              {formatPercent(coin.priceChangePercent)}%
             </div>
           </div>
         </div>
@@ -240,7 +190,7 @@ export default function CoinDetailsPage() {
                         <td
                           className={`px-1.5 py-1 font-medium ${cls}`}
                         >
-                          {percentFormatter.format(c.priceChangePercent)}%
+                          {formatPercent(c.priceChangePercent)}%
                         </td>
                       </tr>
                     );
