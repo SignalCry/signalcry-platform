@@ -7,21 +7,7 @@ import Image from "next/image";
 import { useBinanceWebSocket } from "../src/hooks/useBinanceWebSocket";
 import { COIN_METADATA } from "../src/constants/coinMetadata";
 import { useEffect, useState } from "react";
-
-// Pre-built formatters reused across all formatPrice calls to avoid
-// creating a new Intl.NumberFormat instance on every render cycle.
-const priceFormatter2dp = new Intl.NumberFormat(undefined, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-const priceFormatter4dp = new Intl.NumberFormat(undefined, {
-  minimumFractionDigits: 4,
-  maximumFractionDigits: 4,
-});
-const priceFormatter8dp = new Intl.NumberFormat(undefined, {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 8,
-});
+import { formatPrice, formatChange, formatPercent } from "../src/utils/formatters";
 
 type Coin = {
   id: string;
@@ -127,38 +113,6 @@ export default function HomePage() {
       isMounted = false;
     };
   }, []);
-
-  // Smart price formatter: adjusts decimals based on price value
-  const formatPrice = (price: number) => {
-    if (price >= 1) {
-      // For prices >= $1, show 2 decimals (e.g., $42,850.25)
-      return priceFormatter2dp.format(price);
-    } else if (price >= 0.01) {
-      // For prices between $0.01 - $0.99, show 4 decimals (e.g., $0.1980)
-      return priceFormatter4dp.format(price);
-    } else {
-      // For very small prices < $0.01, show up to 8 decimals (e.g., $0.00000942)
-      return priceFormatter8dp.format(price);
-    }
-  };
-
-  const changeFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
-
-  const percentFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
 
   const visibleCoins = coins.slice(0, 10);
 
@@ -288,12 +242,12 @@ export default function HomePage() {
                         <span className="mr-1">{arrow}</span>
                         <span>
                           {changeSign}
-                          {changeFormatter.format(coin.priceChange)}
+                          {formatChange(coin.priceChange)}
                         </span>
                       </td>
                       <td className={`px-5 py-1 font-medium ${changeClass}`}>
                         {percentSign}
-                        {percentFormatter.format(coin.priceChangePercent)}%
+                        {formatPercent(coin.priceChangePercent)}%
                       </td>
                     </tr>
                   );

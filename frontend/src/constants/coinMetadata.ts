@@ -8,7 +8,7 @@ export const COIN_METADATA: Record<string, { id: string; name: string; symbol: s
   adausdt: { id: "ada", name: "Cardano", symbol: "ADA" },
   dogeusdt: { id: "doge", name: "Dogecoin", symbol: "DOGE" },
   trxusdt: { id: "trx", name: "TRON", symbol: "TRX" },
-  maticusdt: { id: "matic", name: "Polygon", symbol: "MATIC" },
+  polusdt: { id: "pol", name: "Polygon", symbol: "POL" },
   linkusdt: { id: "link", name: "Chainlink", symbol: "LINK" },
   ltcusdt: { id: "ltc", name: "Litecoin", symbol: "LTC" },
   avaxusdt: { id: "avax", name: "Avalanche", symbol: "AVAX" },
@@ -19,4 +19,9 @@ export const COIN_METADATA: Record<string, { id: string; name: string; symbol: s
   tonusdt: { id: "ton", name: "Toncoin", symbol: "TON" },
   hbarusdt: { id: "hbar", name: "Hedera", symbol: "HBAR" },
   nearusdt: { id: "near", name: "NEAR Protocol", symbol: "NEAR" },
+  shibusdt: { id: "shib", name: "Shiba Inu", symbol: "SHIB" },
+  uniusdt: { id: "uni", name: "Uniswap", symbol: "UNI" },
+  aptusdt: { id: "apt", name: "Aptos", symbol: "APT" },
+  arbusdt: { id: "arb", name: "Arbitrum", symbol: "ARB" },
+  xlmusdt: { id: "xlm", name: "Stellar", symbol: "XLM" },
 };

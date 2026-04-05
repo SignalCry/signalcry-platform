@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useTranslation } from "../../src/i18n";
 import { useBinanceWebSocket } from "../../src/hooks/useBinanceWebSocket";
 import { COIN_METADATA } from "../../src/constants/coinMetadata";
+import { formatPrice, formatChange, formatPercent, formatVolume } from "../../src/utils/formatters";
 
 type Coin = {
   id: string;
@@ -46,60 +47,6 @@ export default function MarketPage() {
 
   const isLoading = status === "connecting";
   const error = status === "error" ? "WebSocket connection error" : null;
-
-  // Smart price formatter: adjusts decimals based on price value
-  const formatPrice = (price: number) => {
-    if (price >= 1) {
-      // For prices >= $1, show 2 decimals (e.g., $42,850.25)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(price);
-    } else if (price >= 0.01) {
-      // For prices between $0.01 - $0.99, show 4 decimals (e.g., $0.1980)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      }).format(price);
-    } else {
-      // For very small prices < $0.01, show up to 8 decimals (e.g., $0.00000942)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
-      }).format(price);
-    }
-  };
-
-  // Format volume with abbreviations (K, M, B)
-  const formatVolume = (volume: number) => {
-    if (volume >= 1_000_000_000) {
-      return (volume / 1_000_000_000).toFixed(2) + "B";
-    } else if (volume >= 1_000_000) {
-      return (volume / 1_000_000).toFixed(2) + "M";
-    } else if (volume >= 1_000) {
-      return (volume / 1_000).toFixed(2) + "K";
-    } else {
-      return volume.toFixed(2);
-    }
-  };
-
-  const changeFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
-
-  const percentFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
 
   // Connection status indicator
   const statusColor = {
@@ -179,12 +126,12 @@ export default function MarketPage() {
                       <span className="mr-1">{arrow}</span>
                       <span>
                         {changeSign}
-                        {changeFormatter.format(coin.priceChange)}
+                        {formatChange(coin.priceChange)}
                       </span>
                     </td>
                     <td className={`px-5 py-1.5 font-medium ${changeClass}`}>
                       {percentSign}
-                      {percentFormatter.format(coin.priceChangePercent)}%
+                      {formatPercent(coin.priceChangePercent)}%
                     </td>
                     <td className="px-5 py-1.5 font-medium text-black/70">
                       ${formatVolume(coin.volume)}

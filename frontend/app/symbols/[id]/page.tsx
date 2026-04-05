@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import { useBinanceWebSocket } from "@/src/hooks/useBinanceWebSocket";
+import { COIN_METADATA } from "@/src/constants/coinMetadata";
+import { formatPrice, formatChange, formatPercent } from "@/src/utils/formatters";
 
 type Coin = {
   id: string;
@@ -15,24 +17,6 @@ type Coin = {
   priceChange: number;
   priceChangePercent: number;
   trend: "up" | "down";
-};
-
-// Mapping of Binance symbols to coin metadata
-const COIN_METADATA: Record<string, { id: string; name: string; symbol: string }> = {
-  btcusdt: { id: "btc", name: "Bitcoin", symbol: "BTC" },
-  ethusdt: { id: "eth", name: "Ethereum", symbol: "ETH" },
-  bnbusdt: { id: "bnb", name: "BNB", symbol: "BNB" },
-  solusdt: { id: "sol", name: "Solana", symbol: "SOL" },
-  xrpusdt: { id: "xrp", name: "XRP", symbol: "XRP" },
-  adausdt: { id: "ada", name: "Cardano", symbol: "ADA" },
-  dogeusdt: { id: "doge", name: "Dogecoin", symbol: "DOGE" },
-  trxusdt: { id: "trx", name: "TRON", symbol: "TRX" },
-  maticusdt: { id: "matic", name: "Polygon", symbol: "MATIC" },
-  linkusdt: { id: "link", name: "Chainlink", symbol: "LINK" },
-  ltcusdt: { id: "ltc", name: "Litecoin", symbol: "LTC" },
-  avaxusdt: { id: "avax", name: "Avalanche", symbol: "AVAX" },
-  dotusdt: { id: "dot", name: "Polkadot", symbol: "DOT" },
-  atomusdt: { id: "atom", name: "Cosmos", symbol: "ATOM" },
 };
 
 export default function CoinDetailsPage() {
@@ -68,51 +52,10 @@ export default function CoinDetailsPage() {
     return coins.find((c) => c.id === coinId) ?? null;
   }, [coins, coinId]);
 
-  const visibleCoins = useMemo(() => coins, [coins]); // Show all 14 coins
+  const visibleCoins = useMemo(() => coins, [coins]);
 
   const isLoading = status === "connecting";
   const error = status === "error" ? "WebSocket connection error" : null;
-
-  // Smart price formatter: adjusts decimals based on price value
-  const formatPrice = (price: number) => {
-    if (price >= 1) {
-      // For prices >= $1, show 2 decimals (e.g., $42,850.25)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(price);
-    } else if (price >= 0.01) {
-      // For prices between $0.01 - $0.99, show 4 decimals (e.g., $0.1980)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 4,
-        maximumFractionDigits: 4,
-      }).format(price);
-    } else {
-      // For very small prices < $0.01, show up to 8 decimals (e.g., $0.00000942)
-      return new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 8,
-      }).format(price);
-    }
-  };
-
-  const changeFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
-
-  const percentFormatter = useMemo(
-    () =>
-      new Intl.NumberFormat(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
 
   if (isLoading) {
     return (
@@ -163,14 +106,14 @@ export default function CoinDetailsPage() {
           <div>
             <div className="text-xs text-black/60">{t("table.change")}</div>
             <div className={`font-semibold ${changeClass}`}>
-              {arrow} {changeFormatter.format(coin.priceChange)}
+              {arrow} {formatChange(coin.priceChange)}
             </div>
           </div>
 
           <div>
             <div className="text-xs text-black/60">{t("table.percent")}</div>
             <div className={`font-semibold ${changeClass}`}>
-              {percentFormatter.format(coin.priceChangePercent)}%
+              {formatPercent(coin.priceChangePercent)}%
             </div>
           </div>
         </div>
@@ -241,13 +184,13 @@ export default function CoinDetailsPage() {
                         <td
                           className={`px-1.5 py-1 font-medium ${cls}`}
                         >
-                          {a} {changeFormatter.format(c.priceChange)}
+                          {a} {formatChange(c.priceChange)}
                         </td>
 
                         <td
                           className={`px-1.5 py-1 font-medium ${cls}`}
                         >
-                          {percentFormatter.format(c.priceChangePercent)}%
+                          {formatPercent(c.priceChangePercent)}%
                         </td>
                       </tr>
                     );
