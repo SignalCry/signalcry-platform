@@ -74,7 +74,7 @@ export default function NewsArticlePage() {
     return () => {
       isMounted = false;
     };
-  }, [articleId]);
+  }, [articleId, t]);
 
   if (isLoading) {
     return (

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "../i18n";
+import { APP_NAME } from "../constants/app";
+import Logo from "./Logo";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,13 +13,8 @@ export default function Navbar() {
   return (
     <header className="w-full bg-black">
       <div className="mx-auto flex w-4/5 items-center justify-between py-3">
-        <Link href="/" className="inline-flex items-center">
-          <span className="rounded-l border border-white/20 bg-black px-2 py-1 text-sm font-semibold text-white">
-            Signal
-          </span>
-          <span className="rounded-r border border-white/20 border-l-0 bg-white px-2 py-1 text-sm font-semibold text-black">
-            Cry
-          </span>
+        <Link href="/" aria-label={APP_NAME} className="inline-flex items-center">
+          <Logo />
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-white md:flex">

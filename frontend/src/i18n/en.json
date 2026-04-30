@@ -6,7 +6,7 @@
     "market": "Market"
   },
   "footer": {
-    "copy": "© 2026 SignalCry",
+    "copy": "© 2026 SignalX",
     "language": "Language",
     "english": "English",
     "spanish": "Español"
@@ -28,10 +28,10 @@
     "percent": "%"
   },
   "errors": {
-    "failedLoadCoins": "Failed to load coins",
     "failedLoadNews": "Failed to load news",
     "failedLoadArticle": "Failed to load article",
-    "failedLoadIndicators": "Failed to load indicators"
+    "failedLoadIndicators": "Failed to load indicators",
+    "websocketConnection": "WebSocket connection error"
   },
   "symbols": {
     "loading": "Loading…",

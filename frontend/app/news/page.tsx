@@ -72,7 +72,7 @@ export default function NewsPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   return (
     <main className="text-black">

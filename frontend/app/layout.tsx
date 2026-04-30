@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "../src/components/Navbar";
 import Footer from "../src/components/Footer";
 import I18nProvider from "../src/i18n";
+import { APP_NAME } from "../src/constants/app";
 
 const ibmPlexSans = IBM_Plex_Sans({
   variable: "--font-ibm-plex-sans",
@@ -11,8 +12,12 @@ const ibmPlexSans = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "SignalCry Platform",
-  description: "Crypto news, market forecasts, trading signals, and advanced indicators for digital assets.",
+  title: {
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
+  },
+  description:
+    "Real-time crypto intelligence for traders. Track live crypto prices, news, technical indicators, and X posts that may move the market.",
 };
 
 export default function RootLayout({

@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import en from "./en.json";
 import es from "./es.json";
 
-type Translations = Record<string, any>;
+type Translations = Record<string, unknown>;
 
 const TRANSLATIONS: Record<string, Translations> = {
   en,
@@ -20,8 +20,12 @@ type I18nContextValue = {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-function getByPath(obj: any, path: string) {
-  return path.split(".").reduce((acc, p) => (acc && acc[p] != null ? acc[p] : undefined), obj);
+function getByPath(obj: unknown, path: string): unknown {
+  return path.split(".").reduce<unknown>((acc, key) => {
+    if (!acc || typeof acc !== "object") return undefined;
+    if (!(key in acc)) return undefined;
+    return (acc as Record<string, unknown>)[key];
+  }, obj);
 }
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
@@ -33,7 +37,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       localStorage.setItem("lang", lang);
-    } catch (e) {
+    } catch {
       // ignore
     }
   }, [lang]);

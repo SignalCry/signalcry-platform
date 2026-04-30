@@ -52,8 +52,6 @@ export default function CoinDetailsPage() {
     return coins.find((c) => c.id === coinId) ?? null;
   }, [coins, coinId]);
 
-  const visibleCoins = useMemo(() => coins, [coins]);
-
   const isLoading = status === "connecting";
   const error = status === "error" ? "WebSocket connection error" : null;
 
@@ -161,7 +159,7 @@ export default function CoinDetailsPage() {
                 </thead>
 
                 <tbody>
-                  {visibleCoins.map((c) => {
+                  {coins.map((c) => {
                     const up = c.trend === "up";
                     const cls = up ? "text-green-600" : "text-red-600";
                     const a = up ? "▲" : "▼";
