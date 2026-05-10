@@ -28,6 +28,8 @@ export function useBinanceWebSocket(url: string) {
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const isMountedRef = useRef(true);
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const heartbeatTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -48,6 +50,17 @@ export function useBinanceWebSocket(url: string) {
           console.log("[WebSocket] Connected");
           setStatus("connected");
           reconnectAttemptsRef.current = 0;
+
+          // Heartbeat: send ping every 25s, force-close if no pong within 5s
+          heartbeatIntervalRef.current = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: "ping" }));
+              heartbeatTimeoutRef.current = setTimeout(() => {
+                console.warn("[WebSocket] Heartbeat timeout — closing dead connection");
+                ws.close();
+              }, 5000);
+            }
+          }, 25000);
         };
 
         ws.onmessage = (event) => {
@@ -58,6 +71,15 @@ export function useBinanceWebSocket(url: string) {
 
             if (isDev) {
               console.log("[WebSocket] 📨 RAW MESSAGE:", message);
+            }
+
+            if (message.type === "pong") {
+              // Clear heartbeat timeout — connection is alive
+              if (heartbeatTimeoutRef.current) {
+                clearTimeout(heartbeatTimeoutRef.current);
+                heartbeatTimeoutRef.current = null;
+              }
+              return;
             }
 
             if (message.type === "snapshot" && Array.isArray(message.data)) {
@@ -120,8 +142,8 @@ export function useBinanceWebSocket(url: string) {
           }
         };
 
-        ws.onerror = (error) => {
-          console.error("[WebSocket] Error:", error);
+        ws.onerror = () => {
+          console.warn("[WebSocket] Connection error — will reconnect automatically");
           if (isMountedRef.current) {
             setStatus("error");
           }
@@ -130,6 +152,16 @@ export function useBinanceWebSocket(url: string) {
         ws.onclose = (event) => {
           console.log(`[WebSocket] Closed: ${event.code} - ${event.reason || "No reason"}`);
           wsRef.current = null;
+
+          // Clear heartbeat timers on close
+          if (heartbeatIntervalRef.current) {
+            clearInterval(heartbeatIntervalRef.current);
+            heartbeatIntervalRef.current = null;
+          }
+          if (heartbeatTimeoutRef.current) {
+            clearTimeout(heartbeatTimeoutRef.current);
+            heartbeatTimeoutRef.current = null;
+          }
 
           if (!isMountedRef.current) return;
 
@@ -155,12 +187,41 @@ export function useBinanceWebSocket(url: string) {
 
     connect();
 
+    // Reconnect immediately when the tab becomes visible again (e.g. after sleep/wake)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+          console.log("[WebSocket] Tab visible — checking connection");
+          reconnectAttemptsRef.current = 0; // reset backoff for immediate reconnect
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+          }
+          connect();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       isMountedRef.current = false;
+
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
 
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
+      }
+
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+
+      if (heartbeatTimeoutRef.current) {
+        clearTimeout(heartbeatTimeoutRef.current);
+        heartbeatTimeoutRef.current = null;
       }
 
       if (wsRef.current) {

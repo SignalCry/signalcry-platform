@@ -1,6 +1,6 @@
 const Parser = require("rss-parser");
 const cheerio = require("cheerio");
-const staticNews = require("../data/news");
+
 
 const parser = new Parser({
   timeout: 10000,
@@ -148,17 +148,11 @@ async function getNews() {
   try {
     const articles = await fetchAllNews();
 
-    // If every feed failed, fall back to static data
-    if (articles.length === 0) {
-      console.warn("[newsService] All feeds returned empty, using static fallback");
-      return staticNews;
-    }
-
     cache = { data: articles, timestamp: now };
     return articles;
   } catch (err) {
     console.error("[newsService] Unexpected error, using static fallback:", err.message);
-    return cache.data || staticNews;
+    return cache.data;
   }
 }
 

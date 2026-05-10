@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model News {
+  id          String   @id @default(cuid())
+  title       String
+  excerpt     String?
+  content     String?
+  image       String?
+  source      String
+  url         String   @unique
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([publishedAt])
+  @@index([source])
+}
