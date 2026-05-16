@@ -67,7 +67,7 @@ export default function AuthPage() {
         {/* Logo/Title */}
         <div className="text-center mb-8">
           <div className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 text-transparent bg-clip-text mb-2">
-            SignalX
+            Signal X
           </div>
           <p className="text-gray-400 text-sm">Crypto Intelligence Platform</p>
         </div>

@@ -3,7 +3,12 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: {
+    provider: "postgres",
+    url: process.env.DATABASE_URL,
+  },
+});
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "change-this-secret";
 const JWT_EXPIRES_IN = "7d";
