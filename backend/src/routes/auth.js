@@ -2,13 +2,10 @@ const { Router } = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { PrismaClient } = require("@prisma/client");
+const { PrismaPg } = require("@prisma/adapter-pg");
 
-const prisma = new PrismaClient({
-  adapter: {
-    provider: "postgres",
-    url: process.env.DATABASE_URL,
-  },
-});
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "change-this-secret";
 const JWT_EXPIRES_IN = "7d";
@@ -101,7 +98,10 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
+    console.log("body", req.body);  
     const user = await prisma.user.findUnique({ where: { email } });
+
+    console.log("User:", user);
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
