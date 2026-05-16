@@ -4,6 +4,8 @@ import "./globals.css";
 import Navbar from "../src/components/Navbar";
 import Footer from "../src/components/Footer";
 import I18nProvider from "../src/i18n";
+import { AuthProvider } from "../src/components/AuthProvider";
+import { LayoutWrapper } from "../src/components/LayoutWrapper";
 import { APP_NAME } from "../src/constants/app";
 
 const ibmPlexSans = IBM_Plex_Sans({
@@ -28,11 +30,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${ibmPlexSans.variable} antialiased`}>
-        <I18nProvider>
-          <Navbar />
-          <div className="mx-auto my-5 w-[90%]">{children}</div>
-          <Footer />
-        </I18nProvider>
+        <AuthProvider>
+          <I18nProvider>
+            <Navbar />
+            <LayoutWrapper>{children}</LayoutWrapper>
+            <Footer />
+          </I18nProvider>
+        </AuthProvider>
       </body>
     </html>
   );

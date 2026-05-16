@@ -1,9 +1,16 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useTranslation } from "../i18n";
 
 export default function Footer() {
   const { t, lang, setLang } = useTranslation();
+  const pathname = usePathname();
+
+  // Don't show footer on auth page
+  if (pathname === "/auth") {
+    return null;
+  }
 
   return (
     <footer className="w-full bg-gray-100 py-4 text-black">
