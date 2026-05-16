@@ -1,9 +1,12 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const healthRouter = require("./src/routes/health");
 const newsRoute = require("./src/routes/news");
 const indicatorsRoute = require("./src/routes/indicators");
+const authRoute = require("./src/routes/auth");
 const { setupWebSocketServer } = require("./src/routes/websocket");
 const { initIndicators } = require("./src/services/indicatorService");
 
@@ -14,6 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api", healthRouter);
+app.use("/api/auth", authRoute);
 app.use("/api/news", newsRoute);
 app.use("/api/indicators", indicatorsRoute);
 
