@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "News" ADD COLUMN "topics" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

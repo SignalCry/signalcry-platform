@@ -1,5 +1,11 @@
 const Parser = require("rss-parser");
 const cheerio = require("cheerio");
+const crypto = require("crypto");
+const { PrismaClient } = require("@prisma/client");
+const { PrismaPg } = require("@prisma/adapter-pg");
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
 
 const parser = new Parser({
@@ -17,6 +23,11 @@ const FEEDS = [
   { url: "https://www.coindesk.com/arc/outboundfeeds/rss/", source: "CoinDesk" },
   { url: "https://cointelegraph.com/rss", source: "CoinTelegraph" },
   { url: "https://decrypt.co/feed", source: "Decrypt" },
+  { url: "https://bitcoinmagazine.com/.rss/full/", source: "Bitcoin Magazine" },
+  { url: "https://blockworks.co/feed", source: "Blockworks" },
+  { url: "https://www.newsbtc.com/feed/", source: "NewsBTC" },
+  { url: "https://ambcrypto.com/feed/", source: "AMBCrypto" },
+  { url: "https://cryptopotato.com/feed/", source: "CryptoPotato" },
 ];
 
 // In-memory caches
@@ -69,6 +80,23 @@ function stripHtml(html) {
     .replace(/&[^;]+;/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/**
+ * Detect topics from an article's title + excerpt.
+ */
+const TOPIC_RULES = [
+  { topic: "Bitcoin",    pattern: /\b(bitcoin|btc|satoshi|halving|mining)\b/i },
+  { topic: "Ethereum",   pattern: /\b(ethereum|eth|layer.?2|rollup|eip|vitalik)\b/i },
+  { topic: "DeFi",       pattern: /\b(defi|dex|dao|liquidity|yield|amm|uniswap|aave|compound)\b/i },
+  { topic: "NFT",        pattern: /\b(nft|token|airdrop|opensea|mint)\b/i },
+  { topic: "Regulation", pattern: /\b(regulation|sec|cftc|legislation|ban|law|compliance|congress|cbdc)\b/i },
+  { topic: "Altcoins",   pattern: /\b(solana|sol|cardano|ada|xrp|ripple|bnb|avax|avalanche|dot|polkadot|link|chainlink|doge|dogecoin|shib|memecoin|altcoin)\b/i },
+];
+
+function detectTopics(article) {
+  const text = `${article.title} ${article.excerpt}`;
+  return TOPIC_RULES.filter((r) => r.pattern.test(text)).map((r) => r.topic);
 }
 
 /**
@@ -127,16 +155,41 @@ async function fetchAllNews() {
     return true;
   });
 
-  // Assign stable IDs and limit to 30 articles
-  return articles.slice(0, 30).map((a, idx) => ({
-    id: String(idx + 1),
+  // Assign stable IDs based on URL hash and limit to 150 articles
+  return articles.slice(0, 150).map((a) => ({
+    id: crypto.createHash("sha256").update(a.url || a.title).digest("hex").slice(0, 12),
+    topics: detectTopics(a),
     ...a,
   }));
 }
 
 /**
- * Get news — returns cached data if fresh, otherwise fetches new data.
- * Falls back to static data if all feeds fail.
+ * Upsert a batch of articles into the DB (fire-and-forget, never throws).
+ */
+async function upsertArticlesToDB(articles) {
+  try {
+    await prisma.news.createMany({
+      data: articles
+        .filter((a) => a.url) // url is required (unique key)
+        .map((a) => ({
+          id: a.id,
+          title: a.title,
+          excerpt: a.excerpt || null,
+          image: a.image || null,
+          source: a.source,
+          url: a.url,
+          publishedAt: a.publishedAt ? new Date(a.publishedAt) : null,
+          topics: a.topics ?? [],
+        })),
+      skipDuplicates: true,
+    });
+  } catch (err) {
+    console.error("[newsService] DB upsert failed:", err.message);
+  }
+}
+
+/**
+ * Fetch latest RSS articles, cache in memory, and persist new ones to DB.
  */
 async function getNews() {
   const now = Date.now();
@@ -147,12 +200,15 @@ async function getNews() {
 
   try {
     const articles = await fetchAllNews();
-
     cache = { data: articles, timestamp: now };
+
+    // Persist new articles to DB in the background
+    upsertArticlesToDB(articles);
+
     return articles;
   } catch (err) {
     console.error("[newsService] Unexpected error, using static fallback:", err.message);
-    return cache.data;
+    return cache.data ?? [];
   }
 }
 
@@ -235,14 +291,27 @@ async function scrapeArticle(url) {
 }
 
 /**
- * Get a single article by ID with full scraped content.
+ * Get a single article by ID — looks up from DB then scrapes full content.
  */
 async function getArticle(id) {
-  const articles = await getNews();
-  const article = articles.find((a) => a.id === id);
-  if (!article) return null;
+  // Trigger RSS fetch/upsert if cache is cold (ensures DB is seeded on first boot)
+  await getNews();
 
-  // If we have a URL, scrape the full content
+  const row = await prisma.news.findUnique({ where: { id } });
+  if (!row) return null;
+
+  const article = {
+    id: row.id,
+    title: row.title,
+    excerpt: row.excerpt ?? "",
+    content: row.excerpt ?? "",
+    image: row.image,
+    source: row.source,
+    publishedAt: row.publishedAt?.toISOString() ?? null,
+    url: row.url,
+    topics: row.topics,
+  };
+
   if (article.url) {
     try {
       const fullContent = await scrapeArticle(article.url);
@@ -254,8 +323,85 @@ async function getArticle(id) {
     }
   }
 
-  // Return article with RSS content as fallback
   return article;
 }
 
-module.exports = { getNews, getArticle };
+/**
+ * Get a paginated slice of news from the DB with optional filters.
+ * @param {object} opts
+ * @param {number}  opts.page
+ * @param {number}  opts.limit
+ * @param {string}  opts.source  - exact source name, e.g. "CoinDesk"
+ * @param {string}  opts.topic   - topic label, e.g. "Bitcoin"
+ * @param {string}  opts.date    - ISO date string "YYYY-MM-DD"
+ */
+async function getNewsPaginated({ page = 1, limit = 10, source = "", topic = "", date = "" } = {}) {
+  // Seed DB on first request
+  await getNews();
+
+  const where = {};
+  if (source) where.source = source;
+  if (topic)  where.topics = { has: topic };
+  if (date) {
+    const dayStart = new Date(date);
+    const dayEnd   = new Date(date);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    where.publishedAt = { gte: dayStart, lt: dayEnd };
+  }
+
+  const total = await prisma.news.count({ where });
+  const totalPages = Math.ceil(total / limit);
+  const safePage = Math.max(1, Math.min(page, totalPages || 1));
+
+  const rows = await prisma.news.findMany({
+    where,
+    orderBy: { publishedAt: "desc" },
+    skip: (safePage - 1) * limit,
+    take: limit,
+    select: {
+      id: true, title: true, excerpt: true, image: true,
+      source: true, publishedAt: true, url: true, topics: true,
+    },
+  });
+
+  const articles = rows.map((r) => ({
+    ...r,
+    publishedAt: r.publishedAt?.toISOString() ?? null,
+  }));
+
+  return { articles, total, page: safePage, limit, totalPages };
+}
+
+/**
+ * Return all unique calendar dates (YYYY-MM-DD) that have at least one article in DB.
+ */
+async function getAvailableDates() {
+  await getNews(); // ensure DB is seeded
+
+  const rows = await prisma.$queryRaw`
+    SELECT DISTINCT DATE("publishedAt") AS date
+    FROM "News"
+    WHERE "publishedAt" IS NOT NULL
+    ORDER BY date DESC
+  `;
+  return rows.map((r) => {
+    const d = r.date;
+    return typeof d === "string" ? d.slice(0, 10) : d.toISOString().slice(0, 10);
+  });
+}
+
+/**
+ * Delete articles older than 28 days. Call once on server startup.
+ */
+async function cleanupOldArticles() {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 28);
+  const { count } = await prisma.news.deleteMany({
+    where: { createdAt: { lt: cutoff } },
+  });
+  if (count > 0) {
+    console.log(`[newsService] Cleaned up ${count} articles older than 28 days`);
+  }
+}
+
+module.exports = { getNews, getNewsPaginated, getAvailableDates, getArticle, cleanupOldArticles };

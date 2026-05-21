@@ -9,6 +9,7 @@ const indicatorsRoute = require("./src/routes/indicators");
 const authRoute = require("./src/routes/auth");
 const { setupWebSocketServer } = require("./src/routes/websocket");
 const { initIndicators } = require("./src/services/indicatorService");
+const { cleanupOldArticles } = require("./src/services/newsService");
 
 const app = express();
 const server = http.createServer(app);
@@ -30,5 +31,8 @@ server.listen(PORT, () => {
   console.log(`WebSocket available at ws://localhost:${PORT}/ws/market`);
   initIndicators().catch((err) =>
     console.error("[Indicators] Init failed:", err.message)
+  );
+  cleanupOldArticles().catch((err) =>
+    console.error("[newsService] Cleanup failed:", err.message)
   );
 });

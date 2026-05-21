@@ -98,10 +98,8 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    console.log("body", req.body);  
     const user = await prisma.user.findUnique({ where: { email } });
 
-    console.log("User:", user);
     if (!user) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
