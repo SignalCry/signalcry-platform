@@ -93,13 +93,7 @@ class BinanceWebSocketService {
     this.binanceWs.on("message", (data) => {
       try {
         const parsed = JSON.parse(data.toString());
-        
-        // 🔍 DEBUG: Log raw message from Binance (first message only to avoid spam)
-        if (!this._firstMessageLogged) {
-          console.log("[Binance WS] 📨 SAMPLE MESSAGE STRUCTURE:", JSON.stringify(parsed, null, 2));
-          this._firstMessageLogged = true;
-        }
-        
+
         if (parsed.stream && parsed.data) {
           this.handleBinanceMessage(parsed.data);
         }
@@ -130,14 +124,6 @@ class BinanceWebSocketService {
       const symbol = data.s?.toLowerCase(); // btcusdt
       if (!symbol || !this.tradingPairs.includes(symbol)) {
         return;
-      }
-
-      // 🔍 DEBUG: Log first update for each symbol to see ALL available fields
-      if (!this[`_logged_${symbol}`]) {
-        console.log(`\n[Binance WS] 📊 RAW DATA FROM BINANCE FOR ${symbol.toUpperCase()}:`);
-        console.log(JSON.stringify(data, null, 2));
-        console.log(`[Binance WS] 📋 Available fields for ${symbol.toUpperCase()}:`, Object.keys(data));
-        this[`_logged_${symbol}`] = true;
       }
 
       // Extract ticker data

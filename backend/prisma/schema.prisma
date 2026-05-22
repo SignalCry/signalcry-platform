@@ -24,6 +24,7 @@ model News {
   source      String
   url         String   @unique
   publishedAt DateTime?
+  topics      String[]
   createdAt   DateTime @default(now())
 
   @@index([publishedAt])

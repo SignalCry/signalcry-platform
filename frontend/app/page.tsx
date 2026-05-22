@@ -71,8 +71,8 @@ export default function HomePage() {
           throw new Error(`Failed to load news (HTTP ${response.status})`);
         }
 
-        const data = (await response.json()) as NewsItem[];
-        if (isMounted) setNews(Array.isArray(data) ? data : []);
+        const data = (await response.json()) as { articles: NewsItem[] };
+        if (isMounted) setNews(Array.isArray(data.articles) ? data.articles : []);
       } catch (e) {
         if (isMounted) {
           setNewsError(e instanceof Error ? e.message : t("errors.failedLoadNews"));
