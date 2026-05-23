@@ -9,7 +9,7 @@ const indicatorsRoute = require("./src/routes/indicators");
 const authRoute = require("./src/routes/auth");
 const { setupWebSocketServer } = require("./src/routes/websocket");
 const { initIndicators } = require("./src/services/indicatorService");
-const { cleanupOldArticles } = require("./src/services/newsService");
+const { cleanupOldArticles, getNews } = require("./src/services/newsService");
 const cron = require("node-cron");
 
 const app = express();
@@ -44,3 +44,9 @@ cron.schedule("0 3 * * *", () => {
     console.error("[newsService] Scheduled cleanup failed:", err.message)
   );
 });
+
+// Warm RSS cache on boot, then refresh every 10 min
+getNews().catch((err) => console.error("[newsService] Initial fetch failed:", err.message));
+setInterval(() => {
+  getNews().catch((err) => console.error("[newsService] Scheduled fetch failed:", err.message));
+}, 10 * 60 * 1000);
