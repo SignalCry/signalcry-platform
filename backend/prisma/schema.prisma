@@ -27,6 +27,14 @@ model News {
   topics      String[]
   createdAt   DateTime @default(now())
 
+  aiProcessed   Boolean @default(false)
+  aiSentiment   String?
+  aiImpactScore Float?
+  aiAssets      String[]
+  aiSummary     String?
+
   @@index([publishedAt])
   @@index([source])
+  @@index([aiProcessed])
+  @@index([aiImpactScore(sort: Desc)])
 }
