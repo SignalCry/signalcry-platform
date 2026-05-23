@@ -10,6 +10,7 @@ const authRoute = require("./src/routes/auth");
 const { setupWebSocketServer } = require("./src/routes/websocket");
 const { initIndicators } = require("./src/services/indicatorService");
 const { cleanupOldArticles } = require("./src/services/newsService");
+const cron = require("node-cron");
 
 const app = express();
 const server = http.createServer(app);
@@ -34,5 +35,12 @@ server.listen(PORT, () => {
   );
   cleanupOldArticles().catch((err) =>
     console.error("[newsService] Cleanup failed:", err.message)
+  );
+});
+
+// Run cleanup daily at 3 AM
+cron.schedule("0 3 * * *", () => {
+  cleanupOldArticles().catch((err) =>
+    console.error("[newsService] Scheduled cleanup failed:", err.message)
   );
 });
