@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "@/src/i18n";
+import { API_BASE } from "@/src/constants/app";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,9 +23,7 @@ type NewsItem = {
 type NewsResponse = {
   articles: NewsItem[];
   total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  nextCursor: string | null;
 };
 
 type Filters = { topic: string; source: string; date: string };
@@ -183,9 +182,10 @@ export default function NewsPage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const [cursor, setCursor] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
   const [filters, setFilters] = useState<Filters>({ topic: "", source: "", date: "" });
   const [availableDates, setAvailableDates] = useState<Set<string>>(new Set());
   const [openDropdown, setOpenDropdown] = useState<DropdownKey>(null);
@@ -197,7 +197,7 @@ export default function NewsPage() {
 
   // Fetch available dates once
   useEffect(() => {
-    fetch("http://localhost:4000/api/news/dates")
+    fetch(`${API_BASE}/news/dates`)
       .then((r) => r.json())
       .then((data: { dates: string[] }) => setAvailableDates(new Set(data.dates ?? [])))
       .catch(() => {});
@@ -223,13 +223,14 @@ export default function NewsPage() {
         setIsLoading(true);
         setError(null);
 
-        const params = new URLSearchParams({ page: String(page), limit: String(LIMIT) });
+        const params = new URLSearchParams({ limit: String(LIMIT) });
+        if (cursor)         params.set("cursor", cursor);
         if (filters.topic)  params.set("topic",  filters.topic);
         if (filters.source) params.set("source", filters.source);
         if (filters.date)   params.set("date",   filters.date);
 
         const response = await fetch(
-          `http://localhost:4000/api/news?${params.toString()}`,
+          `${API_BASE}/news?${params.toString()}`,
           { method: "GET", headers: { Accept: "application/json" } }
         );
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -238,7 +239,7 @@ export default function NewsPage() {
         if (isMounted) {
           setNews(Array.isArray(data.articles) ? data.articles : []);
           setTotal(data.total ?? 0);
-          setTotalPages(data.totalPages ?? 1);
+          setNextCursor(data.nextCursor ?? null);
         }
       } catch (e) {
         if (isMounted) {
@@ -252,21 +253,22 @@ export default function NewsPage() {
 
     void loadNews();
     return () => { isMounted = false; };
-  }, [page, filters, t]);
+  }, [cursor, filters, t]);
 
   function applyFilter<K extends keyof Filters>(key: K, value: Filters[K]) {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setPage(1);
+    setCursor("");
+    setCursorStack([]);
     setOpenDropdown(null);
   }
 
   function clearFilters() {
     setFilters({ topic: "", source: "", date: "" });
-    setPage(1);
+    setCursor("");
+    setCursorStack([]);
   }
 
   const hasFilters = !!(filters.topic || filters.source || filters.date);
-  const pageRange = buildPageRange(page, totalPages);
 
   return (
     <main className="text-black">
@@ -453,44 +455,27 @@ export default function NewsPage() {
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-1 border-t border-black/10 px-4 py-4">
+          {(cursorStack.length > 0 || nextCursor) && (
+            <div className="flex items-center justify-center gap-2 border-t border-black/10 px-4 py-4">
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
+                onClick={() => {
+                  const stack = [...cursorStack];
+                  const prev = stack.pop() ?? "";
+                  setCursorStack(stack);
+                  setCursor(prev);
+                }}
+                disabled={cursorStack.length === 0}
                 className="flex h-8 items-center gap-1 rounded border border-black/15 px-3 text-xs font-medium transition-colors hover:border-black/30 disabled:pointer-events-none disabled:opacity-30"
               >
                 ← Prev
               </button>
-
-              <div className="flex items-center gap-1">
-                {pageRange.map((p, i) =>
-                  p === "..." ? (
-                    <span
-                      key={`e-${i}`}
-                      className="flex h-8 w-8 items-center justify-center text-xs text-black/30"
-                    >
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => setPage(p)}
-                      className={`flex h-8 w-8 items-center justify-center rounded border text-xs font-medium transition-colors ${
-                        p === page
-                          ? "border-black bg-black text-white"
-                          : "border-black/15 text-black/70 hover:border-black/30"
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
-              </div>
-
               <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
+                onClick={() => {
+                  if (!nextCursor) return;
+                  setCursorStack((s) => [...s, cursor]);
+                  setCursor(nextCursor);
+                }}
+                disabled={!nextCursor}
                 className="flex h-8 items-center gap-1 rounded border border-black/15 px-3 text-xs font-medium transition-colors hover:border-black/30 disabled:pointer-events-none disabled:opacity-30"
               >
                 Next →

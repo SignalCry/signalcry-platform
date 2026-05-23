@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useTranslation } from "../../src/i18n";
 import { useBinanceWebSocket } from "../../src/hooks/useBinanceWebSocket";
 import { COIN_METADATA } from "../../src/constants/coinMetadata";
+import { WS_BASE } from "../../src/constants/app";
 import { formatPrice, formatChange, formatPercent, formatVolume } from "../../src/utils/formatters";
 
 type Coin = {
@@ -20,7 +21,7 @@ type Coin = {
 
 export default function MarketPage() {
   const { t } = useTranslation();
-  const { marketData, status } = useBinanceWebSocket("ws://localhost:4000/ws/market");
+  const { marketData, status } = useBinanceWebSocket(`${WS_BASE}/ws/market`);
 
   // Transform WebSocket data to Coin array
   const coins = useMemo(() => {

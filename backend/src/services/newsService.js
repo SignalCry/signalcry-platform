@@ -333,7 +333,7 @@ async function getArticle(id) {
  * @param {string}  opts.topic   - topic label, e.g. "Bitcoin"
  * @param {string}  opts.date    - ISO date string "YYYY-MM-DD"
  */
-async function getNewsPaginated({ page = 1, limit = 10, source = "", topic = "", date = "" } = {}) {
+async function getNewsPaginated({ cursor = "", limit = 10, source = "", topic = "", date = "" } = {}) {
   const where = {};
   if (source) where.source = source;
   if (topic)  where.topics = { has: topic };
@@ -345,26 +345,30 @@ async function getNewsPaginated({ page = 1, limit = 10, source = "", topic = "",
   }
 
   const total = await prisma.news.count({ where });
-  const totalPages = Math.ceil(total / limit);
-  const safePage = Math.max(1, Math.min(page, totalPages || 1));
 
-  const rows = await prisma.news.findMany({
+  const queryArgs = {
     where,
-    orderBy: { publishedAt: "desc" },
-    skip: (safePage - 1) * limit,
-    take: limit,
+    orderBy: [{ publishedAt: "desc" }, { id: "asc" }],
+    take: limit + 1,
     select: {
       id: true, title: true, excerpt: true, image: true,
       source: true, publishedAt: true, url: true, topics: true,
     },
-  });
+  };
 
-  const articles = rows.map((r) => ({
+  if (cursor) {
+    queryArgs.cursor = { id: cursor };
+    queryArgs.skip = 1;
+  }
+
+  const rows = await prisma.news.findMany(queryArgs);
+  const hasMore = rows.length > limit;
+  const articles = rows.slice(0, limit).map((r) => ({
     ...r,
     publishedAt: r.publishedAt?.toISOString() ?? null,
   }));
 
-  return { articles, total, page: safePage, limit, totalPages };
+  return { articles, total, nextCursor: hasMore ? articles[articles.length - 1].id : null };
 }
 
 /**

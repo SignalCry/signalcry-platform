@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslation } from "@/src/i18n";
+import { API_BASE } from "@/src/constants/app";
 
 type NewsItem = {
   id: string;
@@ -46,7 +47,7 @@ export default function NewsArticlePage() {
         setError(null);
 
         const response = await fetch(
-          `http://localhost:4000/api/news/${articleId}`,
+          `${API_BASE}/news/${articleId}`,
           {
             method: "GET",
             headers: { Accept: "application/json" },
