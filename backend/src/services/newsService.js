@@ -294,9 +294,6 @@ async function scrapeArticle(url) {
  * Get a single article by ID — looks up from DB then scrapes full content.
  */
 async function getArticle(id) {
-  // Trigger RSS fetch/upsert if cache is cold (ensures DB is seeded on first boot)
-  await getNews();
-
   const row = await prisma.news.findUnique({ where: { id } });
   if (!row) return null;
 
@@ -336,9 +333,6 @@ async function getArticle(id) {
  * @param {string}  opts.date    - ISO date string "YYYY-MM-DD"
  */
 async function getNewsPaginated({ page = 1, limit = 10, source = "", topic = "", date = "" } = {}) {
-  // Seed DB on first request
-  await getNews();
-
   const where = {};
   if (source) where.source = source;
   if (topic)  where.topics = { has: topic };
@@ -376,8 +370,6 @@ async function getNewsPaginated({ page = 1, limit = 10, source = "", topic = "",
  * Return all unique calendar dates (YYYY-MM-DD) that have at least one article in DB.
  */
 async function getAvailableDates() {
-  await getNews(); // ensure DB is seeded
-
   const rows = await prisma.$queryRaw`
     SELECT DISTINCT DATE("publishedAt") AS date
     FROM "News"
