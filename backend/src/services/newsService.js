@@ -35,6 +35,9 @@ let cache = { data: null, timestamp: 0 };
 const articleCache = new Map(); // url -> { content, scrapedAt }
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const ARTICLE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const DATES_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+let datesCache = { data: null, timestamp: 0 };
 
 /**
  * Extract the best available image from a feed item.
@@ -375,16 +378,24 @@ async function getNewsPaginated({ cursor = "", limit = 10, source = "", topic = 
  * Return all unique calendar dates (YYYY-MM-DD) that have at least one article in DB.
  */
 async function getAvailableDates() {
+  const now = Date.now();
+  if (datesCache.data && now - datesCache.timestamp < DATES_CACHE_TTL) {
+    return datesCache.data;
+  }
+
   const rows = await prisma.$queryRaw`
     SELECT DISTINCT DATE("publishedAt") AS date
     FROM "News"
     WHERE "publishedAt" IS NOT NULL
     ORDER BY date DESC
   `;
-  return rows.map((r) => {
+  const dates = rows.map((r) => {
     const d = r.date;
     return typeof d === "string" ? d.slice(0, 10) : d.toISOString().slice(0, 10);
   });
+
+  datesCache = { data: dates, timestamp: now };
+  return dates;
 }
 
 /**
