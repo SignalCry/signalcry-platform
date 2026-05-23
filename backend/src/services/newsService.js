@@ -35,6 +35,9 @@ let cache = { data: null, timestamp: 0 };
 const articleCache = new Map(); // url -> { content, scrapedAt }
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
 const ARTICLE_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const DATES_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+let datesCache = { data: null, timestamp: 0 };
 
 /**
  * Extract the best available image from a feed item.
@@ -68,7 +71,7 @@ function makeExcerpt(html, maxLength = 200) {
     .replace(/\s+/g, " ")
     .trim();
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength).replace(/\s\S*$/, "") + "…";
+  return text.slice(0, maxLength).replace(/\s\S*$/, "").replace(/[,;:\-\u2013\u2014]+$/, "") + "\u2026";
 }
 
 /**
@@ -146,17 +149,17 @@ async function fetchAllNews() {
     (a, b) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime()
   );
 
-  // Deduplicate by title (lowercased)
+  // Deduplicate by URL (falls back to title if URL is missing)
   const seen = new Set();
   articles = articles.filter((a) => {
-    const key = a.title.toLowerCase();
+    const key = a.url || a.title.toLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
 
-  // Assign stable IDs based on URL hash and limit to 150 articles
-  return articles.slice(0, 150).map((a) => ({
+  // Assign stable IDs based on URL hash and limit to 300 articles
+  return articles.slice(0, 300).map((a) => ({
     id: crypto.createHash("sha256").update(a.url || a.title).digest("hex").slice(0, 12),
     topics: detectTopics(a),
     ...a,
@@ -175,6 +178,7 @@ async function upsertArticlesToDB(articles) {
           id: a.id,
           title: a.title,
           excerpt: a.excerpt || null,
+          content: a.content || null,
           image: a.image || null,
           source: a.source,
           url: a.url,
@@ -294,9 +298,6 @@ async function scrapeArticle(url) {
  * Get a single article by ID — looks up from DB then scrapes full content.
  */
 async function getArticle(id) {
-  // Trigger RSS fetch/upsert if cache is cold (ensures DB is seeded on first boot)
-  await getNews();
-
   const row = await prisma.news.findUnique({ where: { id } });
   if (!row) return null;
 
@@ -304,7 +305,7 @@ async function getArticle(id) {
     id: row.id,
     title: row.title,
     excerpt: row.excerpt ?? "",
-    content: row.excerpt ?? "",
+    content: row.content || row.excerpt || "",
     image: row.image,
     source: row.source,
     publishedAt: row.publishedAt?.toISOString() ?? null,
@@ -335,10 +336,7 @@ async function getArticle(id) {
  * @param {string}  opts.topic   - topic label, e.g. "Bitcoin"
  * @param {string}  opts.date    - ISO date string "YYYY-MM-DD"
  */
-async function getNewsPaginated({ page = 1, limit = 10, source = "", topic = "", date = "" } = {}) {
-  // Seed DB on first request
-  await getNews();
-
+async function getNewsPaginated({ cursor = "", limit = 10, source = "", topic = "", date = "" } = {}) {
   const where = {};
   if (source) where.source = source;
   if (topic)  where.topics = { has: topic };
@@ -350,33 +348,40 @@ async function getNewsPaginated({ page = 1, limit = 10, source = "", topic = "",
   }
 
   const total = await prisma.news.count({ where });
-  const totalPages = Math.ceil(total / limit);
-  const safePage = Math.max(1, Math.min(page, totalPages || 1));
 
-  const rows = await prisma.news.findMany({
+  const queryArgs = {
     where,
-    orderBy: { publishedAt: "desc" },
-    skip: (safePage - 1) * limit,
-    take: limit,
+    orderBy: [{ publishedAt: "desc" }, { id: "asc" }],
+    take: limit + 1,
     select: {
       id: true, title: true, excerpt: true, image: true,
       source: true, publishedAt: true, url: true, topics: true,
     },
-  });
+  };
 
-  const articles = rows.map((r) => ({
+  if (cursor) {
+    queryArgs.cursor = { id: cursor };
+    queryArgs.skip = 1;
+  }
+
+  const rows = await prisma.news.findMany(queryArgs);
+  const hasMore = rows.length > limit;
+  const articles = rows.slice(0, limit).map((r) => ({
     ...r,
     publishedAt: r.publishedAt?.toISOString() ?? null,
   }));
 
-  return { articles, total, page: safePage, limit, totalPages };
+  return { articles, total, nextCursor: hasMore ? articles[articles.length - 1].id : null };
 }
 
 /**
  * Return all unique calendar dates (YYYY-MM-DD) that have at least one article in DB.
  */
 async function getAvailableDates() {
-  await getNews(); // ensure DB is seeded
+  const now = Date.now();
+  if (datesCache.data && now - datesCache.timestamp < DATES_CACHE_TTL) {
+    return datesCache.data;
+  }
 
   const rows = await prisma.$queryRaw`
     SELECT DISTINCT DATE("publishedAt") AS date
@@ -384,10 +389,13 @@ async function getAvailableDates() {
     WHERE "publishedAt" IS NOT NULL
     ORDER BY date DESC
   `;
-  return rows.map((r) => {
+  const dates = rows.map((r) => {
     const d = r.date;
     return typeof d === "string" ? d.slice(0, 10) : d.toISOString().slice(0, 10);
   });
+
+  datesCache = { data: dates, timestamp: now };
+  return dates;
 }
 
 /**

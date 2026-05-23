@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { API_BASE } from "@/src/constants/app";
 
 export interface AuthUser {
   email: string;
@@ -34,7 +35,6 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 const TOKEN_KEY = "signalcry_token";
 const USER_KEY = "signalcry_user";
 

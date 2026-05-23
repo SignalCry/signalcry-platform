@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useTranslation } from "../../src/i18n";
+import { API_BASE } from "../../src/constants/app";
 
 type EmaData = {
   value: number;
@@ -132,7 +133,7 @@ export default function IndicatorsPage() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/indicators", {
+      const res = await fetch(`${API_BASE}/indicators`, {
         headers: { Accept: "application/json" },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

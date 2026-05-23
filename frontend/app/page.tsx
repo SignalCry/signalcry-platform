@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useBinanceWebSocket } from "@/src/hooks/useBinanceWebSocket";
 import { COIN_METADATA } from "@/src/constants/coinMetadata";
+import { API_BASE, WS_BASE } from "@/src/constants/app";
 import MarketMovers from "@/app/components/MarketMovers";
 import { useTranslation } from "@/src/i18n";
 import { formatChange, formatPercent, formatPrice } from "@/src/utils/formatters";
@@ -46,8 +47,7 @@ function timeAgo(dateStr?: string): string {
 export default function HomePage() {
   const { t } = useTranslation();
 
-  const wsBaseUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:4000";
-  const marketWsUrl = `${wsBaseUrl.replace(/\/$/, "")}/ws/market`;
+  const marketWsUrl = `${WS_BASE.replace(/\/$/, "")}/ws/market`;
   const { marketData, status } = useBinanceWebSocket(marketWsUrl);
 
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -62,7 +62,7 @@ export default function HomePage() {
         setNewsLoading(true);
         setNewsError(null);
 
-        const response = await fetch("http://localhost:4000/api/news", {
+        const response = await fetch(`${API_BASE}/news`, {
           method: "GET",
           headers: { Accept: "application/json" },
         });
@@ -195,6 +195,7 @@ export default function HomePage() {
                               width={128}
                               height={96}
                               className="h-24 w-32 shrink-0 rounded object-cover"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                             />
                           )}
                           <div className="min-w-0">
