@@ -71,7 +71,7 @@ function makeExcerpt(html, maxLength = 200) {
     .replace(/\s+/g, " ")
     .trim();
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength).replace(/\s\S*$/, "") + "…";
+  return text.slice(0, maxLength).replace(/\s\S*$/, "").replace(/[,;:\-\u2013\u2014]+$/, "") + "\u2026";
 }
 
 /**
@@ -158,8 +158,8 @@ async function fetchAllNews() {
     return true;
   });
 
-  // Assign stable IDs based on URL hash and limit to 150 articles
-  return articles.slice(0, 150).map((a) => ({
+  // Assign stable IDs based on URL hash and limit to 300 articles
+  return articles.slice(0, 300).map((a) => ({
     id: crypto.createHash("sha256").update(a.url || a.title).digest("hex").slice(0, 12),
     topics: detectTopics(a),
     ...a,

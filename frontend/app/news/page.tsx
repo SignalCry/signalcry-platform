@@ -38,7 +38,7 @@ const SOURCES = [
   "AMBCrypto", "CryptoPotato",
 ];
 const DAY_LABELS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
-const LIMIT = 10;
+const LIMIT = 25;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -419,6 +419,7 @@ export default function NewsPage() {
                       width={160}
                       height={100}
                       className="h-18 w-28 shrink-0 rounded object-cover"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                     />
                   )}
                   <div className="min-w-0 flex-1">

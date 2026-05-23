@@ -195,6 +195,7 @@ export default function HomePage() {
                               width={128}
                               height={96}
                               className="h-24 w-32 shrink-0 rounded object-cover"
+                              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                             />
                           )}
                           <div className="min-w-0">
