@@ -146,10 +146,10 @@ async function fetchAllNews() {
     (a, b) => new Date(b.publishedAt || 0).getTime() - new Date(a.publishedAt || 0).getTime()
   );
 
-  // Deduplicate by title (lowercased)
+  // Deduplicate by URL (falls back to title if URL is missing)
   const seen = new Set();
   articles = articles.filter((a) => {
-    const key = a.title.toLowerCase();
+    const key = a.url || a.title.toLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
