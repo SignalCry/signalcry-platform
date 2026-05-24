@@ -15,7 +15,10 @@ const cron = require("node-cron");
 const app = express();
 const server = http.createServer(app);
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "*",
+  credentials: true,
+}));
 app.use(express.json());
 
 app.use("/api", healthRouter);
@@ -26,7 +29,7 @@ app.use("/api/indicators", indicatorsRoute);
 // Setup WebSocket server
 setupWebSocketServer(server);
 
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`WebSocket available at ws://localhost:${PORT}/ws/market`);
