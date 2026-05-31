@@ -199,6 +199,8 @@ export default function IndicatorsPage() {
           <div className="px-3 py-3 text-sm">{t("common.loading")}</div>
         ) : error ? (
           <div className="px-3 py-3 text-sm">{error}</div>
+        ) : sorted.length === 0 ? (
+          <div className="px-3 py-3 text-sm text-black/60">{t("indicators.empty")}</div>
         ) : (
           <>
             {activeTab === "ema" && <EmaTable data={sorted} />}

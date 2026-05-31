@@ -49,6 +49,7 @@
     "ema": "Medias Móviles",
     "rsi": "RSI",
     "macd": "MACD",
-    "bb": "Bandas de Bollinger"
+    "bb": "Bandas de Bollinger",
+    "empty": "No hay datos de indicadores disponibles. El servidor puede estar cargando datos de mercado — intente actualizar en un minuto."
   }
 }
