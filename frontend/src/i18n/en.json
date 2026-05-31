@@ -49,6 +49,7 @@
     "ema": "Moving Averages",
     "rsi": "RSI",
     "macd": "MACD",
-    "bb": "Bollinger Bands"
+    "bb": "Bollinger Bands",
+    "empty": "No indicator data available yet. The server may still be loading market data — try refreshing in a minute."
   }
 }
