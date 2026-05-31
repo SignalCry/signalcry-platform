@@ -5,12 +5,13 @@ const { ema, rsi, macd, bollingerBands } = require("../utils/indicators");
  * Indicator Service
  *
  * Architecture decisions:
- * - Fetches 200 x 1h candles per symbol from Binance REST (free, no API key).
- * - Subscribes to live kline WebSocket for real-time updates.
+ * - Fetches 200 x 1h candles per symbol from Binance Spot REST (free, no API key).
+ * - Subscribes to live spot kline WebSocket for real-time updates.
  * - Recalculates indicators only on confirmed candle closes (not every tick)
  *   to avoid noise and reduce CPU.
  * - Stores computed results in memory — the REST endpoint reads from here.
  * - 200 candles is sufficient: longest lookback is EMA(200).
+ * - Bootstrap requests are sequential with backoff to avoid Binance IP bans (418).
  *
  * Security:
  * - No user input reaches Binance — symbols are hardcoded.
@@ -26,6 +27,9 @@ const TRADING_PAIRS = [
 
 const KLINE_INTERVAL = "1h";
 const KLINE_LIMIT = 201; // 201 so we have 200 after dropping the unclosed bar
+const BOOTSTRAP_DELAY_MS = 250;
+const MAX_KLINE_RETRIES = 5;
+const SPOT_KLINES_URL = "https://api.binance.com/api/v3/klines";
 
 // In-memory stores
 const klineData = new Map();   // symbol -> number[] (closing prices)
@@ -35,19 +39,45 @@ let ws = null;
 let reconnectTimeout = null;
 let initialized = false;
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getRetryAfterMs(res, attempt) {
+  const header = res.headers.get("retry-after");
+  if (header) {
+    const seconds = parseInt(header, 10);
+    if (!Number.isNaN(seconds)) return (seconds + 5) * 1000;
+  }
+  // Default backoff: 30s, 60s, 90s…
+  return (attempt + 1) * 30_000;
+}
+
 /**
- * Fetch historical klines from Binance REST.
- * Public endpoint, no API key required, 1200 req/min limit (we make 14).
+ * Fetch historical klines from Binance Spot REST with retry on rate limits.
+ * Public endpoint, no API key required.
  */
-async function fetchKlines(symbol) {
+async function fetchKlines(symbol, attempt = 0) {
   const url =
-    `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol.toUpperCase()}` +
+    `${SPOT_KLINES_URL}?symbol=${symbol.toUpperCase()}` +
     `&interval=${KLINE_INTERVAL}&limit=${KLINE_LIMIT}`;
 
   const res = await fetch(url, {
     headers: { "User-Agent": "SignalCry/1.0" },
     signal: AbortSignal.timeout(10000),
   });
+
+  if (res.status === 429 || res.status === 418) {
+    if (attempt >= MAX_KLINE_RETRIES) {
+      throw new Error(`Binance REST ${res.status} for ${symbol} (max retries)`);
+    }
+    const retryMs = getRetryAfterMs(res, attempt);
+    console.warn(
+      `[Indicators] ${res.status} for ${symbol}, retrying in ${Math.round(retryMs / 1000)}s (attempt ${attempt + 1}/${MAX_KLINE_RETRIES})...`
+    );
+    await sleep(retryMs);
+    return fetchKlines(symbol, attempt + 1);
+  }
 
   if (!res.ok) throw new Error(`Binance REST ${res.status} for ${symbol}`);
 
@@ -124,38 +154,47 @@ function computeIndicators(symbol, closes) {
 }
 
 /**
- * Bootstrap: fetch historical klines for all pairs, compute initial indicators.
+ * Bootstrap: fetch historical klines sequentially, compute initial indicators.
  */
 async function bootstrap() {
-  console.log("[Indicators] Bootstrapping with historical klines...");
+  console.log("[Indicators] Bootstrapping with historical klines (spot API, sequential)...");
 
-  const results = await Promise.allSettled(
-    TRADING_PAIRS.map(async (symbol) => {
+  let succeeded = 0;
+  const failures = [];
+
+  for (let i = 0; i < TRADING_PAIRS.length; i++) {
+    const symbol = TRADING_PAIRS[i];
+    try {
       const closes = await fetchKlines(symbol);
       klineData.set(symbol, closes);
       const result = computeIndicators(symbol, closes);
       if (result) indicators.set(symbol, result);
-      return symbol;
-    })
-  );
+      succeeded++;
+    } catch (err) {
+      failures.push(err);
+      console.warn("[Indicators] Failed:", err.message);
+    }
 
-  const succeeded = results.filter((r) => r.status === "fulfilled").length;
-  const failed = results.filter((r) => r.status === "rejected");
+    if (i < TRADING_PAIRS.length - 1) {
+      await sleep(BOOTSTRAP_DELAY_MS);
+    }
+  }
+
   console.log(`[Indicators] Bootstrap done: ${succeeded}/${TRADING_PAIRS.length} symbols loaded`);
-  if (failed.length > 0) {
-    failed.forEach((r) => console.warn("[Indicators] Failed:", r.reason?.message));
+  if (failures.length > 0 && succeeded === 0) {
+    console.warn("[Indicators] All bootstrap requests failed — indicators will be empty until retry");
   }
 }
 
 /**
- * Subscribe to live 1h kline stream for all pairs.
+ * Subscribe to live 1h spot kline stream for all pairs.
  * We only recalculate on confirmed candle closes (x === true).
  */
 function connectKlineStream() {
   if (ws && ws.readyState === WebSocket.OPEN) return;
 
   const streams = TRADING_PAIRS.map((s) => `${s}@kline_${KLINE_INTERVAL}`).join("/");
-  const url = `wss://fstream.binance.com/stream?streams=${streams}`;
+  const url = `wss://stream.binance.com:9443/stream?streams=${streams}`;
 
   console.log("[Indicators] Connecting to Binance kline stream...");
   ws = new WebSocket(url);
