@@ -7,8 +7,8 @@ import { useBinanceWebSocket } from "@/src/hooks/useBinanceWebSocket";
 import { COIN_METADATA } from "@/src/constants/coinMetadata";
 import { API_BASE, WS_BASE } from "@/src/constants/app";
 import MarketMovers from "@/app/components/MarketMovers";
+import MarketTable from "@/app/components/MarketTable";
 import { useTranslation } from "@/src/i18n";
-import { formatChange, formatPercent, formatPrice } from "@/src/utils/formatters";
 
 type MarketRow = {
   key: string;
@@ -239,59 +239,7 @@ export default function HomePage() {
                 ) : error ? (
                   <div className="px-3 pb-3 text-sm">{error}</div>
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left">
-                        <th className="px-5 py-2 font-medium">{t("table.coin")}</th>
-                        <th className="px-5 py-2 font-medium">{t("table.priceUSD")}</th>
-                        <th className="px-5 py-2 font-medium">{t("table.change")}</th>
-                        <th className="px-5 py-2 font-medium">{t("table.percent")}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visibleCoins.map((coin, idx) => {
-                        const isUp = coin.priceChange >= 0;
-                        const arrow = isUp ? "▲" : "▼";
-                        const changeClass = isUp ? "text-green-600" : "text-red-600";
-                        const changeSign = coin.priceChange > 0 ? "+" : "";
-                        const percentSign = coin.priceChangePercent > 0 ? "+" : "";
-                        const isLast = idx === visibleCoins.length - 1;
-                        return (
-                          <tr
-                            key={coin.key}
-                            className={!isLast ? "border-b border-black/10" : undefined}
-                          >
-                            <td className="px-5 py-1">
-                              <div className="font-medium">
-                                <Link href={`/symbols/${coin.id}`} className="font-medium">
-                                  {coin.name}
-                                </Link>
-                              </div>
-                              <div className="text-xs text-black/60">
-                                <Link href={`/symbols/${coin.id}`} className="font-medium">
-                                  {coin.symbol}
-                                </Link>
-                              </div>
-                            </td>
-                            <td className="px-5 py-1 font-medium">
-                              {formatPrice(coin.price)}
-                            </td>
-                            <td className={`px-5 py-1 font-medium ${changeClass}`}>
-                              <span className="mr-1">{arrow}</span>
-                              <span>
-                                {changeSign}
-                                {formatChange(coin.priceChange)}
-                              </span>
-                            </td>
-                            <td className={`px-5 py-1 font-medium ${changeClass}`}>
-                              {percentSign}
-                              {formatPercent(coin.priceChangePercent)}%
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                  <MarketTable rows={visibleCoins} />
                 )}
               </div>
 
