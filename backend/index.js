@@ -10,6 +10,7 @@ const authRoute = require("./src/routes/auth");
 const { setupWebSocketServer } = require("./src/routes/websocket");
 const { initIndicators } = require("./src/services/indicatorService");
 const { cleanupOldArticles, getNews } = require("./src/services/newsService");
+const { processPendingArticles } = require("./src/services/signalWorker");
 const cron = require("node-cron");
 
 const app = express();
@@ -53,3 +54,14 @@ getNews().catch((err) => console.error("[newsService] Initial fetch failed:", er
 setInterval(() => {
   getNews().catch((err) => console.error("[newsService] Scheduled fetch failed:", err.message));
 }, 10 * 60 * 1000);
+
+// Process pending articles with AI — run shortly after boot, then every 5 min
+setTimeout(() => {
+  processPendingArticles({ batchSize: 10, delayMs: 1500 })
+    .catch((err) => console.error("[signalWorker] Initial run failed:", err.message));
+}, 30 * 1000); // 30s after boot, lets RSS populate first
+
+setInterval(() => {
+  processPendingArticles({ batchSize: 10, delayMs: 1500 })
+    .catch((err) => console.error("[signalWorker] Scheduled run failed:", err.message));
+}, 5 * 60 * 1000); // every 5 minutes
