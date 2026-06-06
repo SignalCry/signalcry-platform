@@ -25,10 +25,16 @@ export interface AuthContextValue {
   loading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<AuthResult>;
+  requestSignupCode: (
+    email: string,
+    username: string,
+    password: string,
+  ) => Promise<AuthResult>;
   signup: (
     email: string,
     username: string,
     password: string,
+    code: string,
   ) => Promise<AuthResult>;
   logout: () => void;
 }
@@ -45,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       const token = localStorage.getItem(TOKEN_KEY);
+
       if (!token) {
         setLoading(false);
         return;
@@ -92,18 +99,70 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+        }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
-        return { success: false, message: data.error || "Invalid credentials" };
+        return {
+          success: false,
+          message: data.error || "Invalid credentials",
+        };
       }
 
       saveSession(data.user, data.token);
-      return { success: true };
+
+      return {
+        success: true,
+      };
     } catch (error) {
-      return { success: false, message: "Unable to contact auth server" };
+      return {
+        success: false,
+        message: "Unable to contact auth server",
+      };
+    }
+  };
+
+  const requestSignupCode = async (
+    email: string,
+    username: string,
+    password: string,
+  ): Promise<AuthResult> => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/request-signup-code`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          username,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return {
+          success: false,
+          message: data.error || "Unable to send verification code",
+        };
+      }
+
+      return {
+        success: true,
+        message: data.message || "Verification code sent to your email",
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: "Unable to contact auth server",
+      };
     }
   };
 
@@ -111,6 +170,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     username: string,
     password: string,
+    code: string,
   ): Promise<AuthResult> => {
     try {
       const res = await fetch(`${API_BASE}/auth/signup`, {
@@ -118,18 +178,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, username, password }),
+        body: JSON.stringify({
+          email,
+          username,
+          password,
+          code,
+        }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
-        return { success: false, message: data.error || "Unable to sign up" };
+        return {
+          success: false,
+          message: data.error || "Unable to sign up",
+        };
       }
 
       saveSession(data.user, data.token);
-      return { success: true };
+
+      return {
+        success: true,
+      };
     } catch (error) {
-      return { success: false, message: "Unable to contact auth server" };
+      return {
+        success: false,
+        message: "Unable to contact auth server",
+      };
     }
   };
 
@@ -145,6 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       isAuthenticated: !!user,
       login,
+      requestSignupCode,
       signup,
       logout,
     }),
@@ -156,8 +232,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error("useAuth must be used within AuthProvider");
   }
+
   return context;
 }

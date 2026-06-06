@@ -295,36 +295,28 @@ async function scrapeArticle(url) {
 }
 
 /**
- * Get a single article by ID — looks up from DB then scrapes full content.
+ * Get a single article by ID — returns DB metadata plus AI analysis fields.
+ * Does NOT return scraped full article text.
  */
 async function getArticle(id) {
   const row = await prisma.news.findUnique({ where: { id } });
   if (!row) return null;
 
-  const article = {
+  return {
     id: row.id,
     title: row.title,
     excerpt: row.excerpt ?? "",
-    content: row.content || row.excerpt || "",
     image: row.image,
     source: row.source,
     publishedAt: row.publishedAt?.toISOString() ?? null,
     url: row.url,
     topics: row.topics,
+    aiProcessed: row.aiProcessed,
+    aiSummary: row.aiSummary ?? null,
+    aiSentiment: row.aiSentiment ?? null,
+    aiImpactScore: row.aiImpactScore ?? null,
+    aiAssets: row.aiAssets ?? [],
   };
-
-  if (article.url) {
-    try {
-      const fullContent = await scrapeArticle(article.url);
-      if (fullContent && fullContent.length > article.content.length) {
-        return { ...article, content: fullContent };
-      }
-    } catch (err) {
-      console.warn(`[newsService] Scrape failed for ${article.url}: ${err.message}`);
-    }
-  }
-
-  return article;
 }
 
 /**
@@ -356,6 +348,7 @@ async function getNewsPaginated({ cursor = "", limit = 10, source = "", topic = 
     select: {
       id: true, title: true, excerpt: true, image: true,
       source: true, publishedAt: true, url: true, topics: true,
+      aiProcessed: true, aiSentiment: true, aiImpactScore: true, aiAssets: true,
     },
   };
 

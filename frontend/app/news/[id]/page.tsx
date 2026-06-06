@@ -11,10 +11,15 @@ type NewsItem = {
   title: string;
   image: string | null;
   excerpt: string;
-  content: string;
   source?: string;
   publishedAt?: string;
   url?: string;
+  topics?: string[];
+  aiProcessed?: boolean;
+  aiSummary?: string | null;
+  aiSentiment?: "bullish" | "bearish" | "neutral" | null;
+  aiImpactScore?: number | null;
+  aiAssets?: string[];
 };
 
 function formatDate(dateStr?: string): string {
@@ -27,6 +32,12 @@ function formatDate(dateStr?: string): string {
     minute: "2-digit",
   });
 }
+
+const SENTIMENT_STYLES: Record<"bullish" | "bearish" | "neutral", string> = {
+  bullish: "bg-green-50 text-green-700",
+  bearish: "bg-red-50 text-red-700",
+  neutral: "bg-black/5 text-black/60",
+};
 
 export default function NewsArticlePage() {
   const params = useParams<{ id: string }>();
@@ -93,20 +104,43 @@ export default function NewsArticlePage() {
     );
   }
 
-  const paragraphs = article.content
-    .split("\n\n")
-    .map((p) => p.trim())
-    .filter((p) => p.length > 0);
+  const hasAnalysis = Boolean(article.aiProcessed && article.aiSummary);
+  const sentiment = article.aiSentiment ?? "neutral";
 
   return (
     <main className="min-h-screen p-6 text-black">
       <div className="mx-auto max-w-2xl">
         <Link
           href="/news"
-          className="mb-6 inline-block text-sm text-black/50 hover:text-black"
+          className="mb-6 inline-block text-base text-black/50 no-underline hover:underline hover:underline-offset-2 hover:text-black"
         >
           &larr; {t("news.backToNews")}
         </Link>
+
+        {hasAnalysis && (
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            {article.topics?.map((topic) => (
+              <span
+                key={topic}
+                className="rounded-full bg-black/5 px-2.5 py-0.5 text-base text-black/60"
+              >
+                {topic}
+              </span>
+            ))}
+
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-base font-medium ${SENTIMENT_STYLES[sentiment]}`}
+            >
+              {sentiment.charAt(0).toUpperCase() + sentiment.slice(1)}
+            </span>
+
+            {typeof article.aiImpactScore === "number" && (
+              <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-base font-medium text-amber-700">
+                Impact {article.aiImpactScore}/100
+              </span>
+            )}
+          </div>
+        )}
 
         <h1 className="mb-3 text-2xl font-semibold leading-tight">
           {article.title}
@@ -120,13 +154,49 @@ export default function NewsArticlePage() {
           </p>
         )}
 
-        <article className="space-y-4">
-          {paragraphs.map((p, i) => (
-            <p key={i} className="text-base leading-relaxed text-black/85">
-              {p}
+        {hasAnalysis && (
+          <div className="mb-6 rounded-xl border border-black/10 bg-black/3 p-5">
+            <div className="mb-3 flex items-center gap-1.5 text-base font-medium">
+              <span aria-hidden>⚡</span>
+              <span>Signal X AI Analysis</span>
+            </div>
+
+            <p className="text-base leading-relaxed text-black/80">
+              {article.aiSummary}
             </p>
-          ))}
-        </article>
+
+            {article.aiAssets && article.aiAssets.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="text-base text-black/50">Affected assets:</span>
+                {article.aiAssets.map((asset) => (
+                  <span
+                    key={asset}
+                    className="rounded border border-black/15 px-2 py-0.5 text-base"
+                  >
+                    {asset}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {article.excerpt && (
+          <p className="mb-6 text-base leading-relaxed text-black/70">
+            {article.excerpt}
+          </p>
+        )}
+
+        {article.url && (
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block rounded-md border border-black/15 px-4 py-2 text-base hover:bg-black/5"
+          >
+            Read full article at {article.source} &rarr;
+          </a>
+        )}
       </div>
     </main>
   );

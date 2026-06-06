@@ -30,6 +30,10 @@ type NewsItem = {
   source?: string;
   publishedAt?: string;
   url?: string;
+  aiProcessed?: boolean;
+  aiSentiment?: "bullish" | "bearish" | "neutral" | null;
+  aiImpactScore?: number | null;
+  aiAssets?: string[];
 };
 
 function timeAgo(dateStr?: string): string {
@@ -42,6 +46,12 @@ function timeAgo(dateStr?: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+function impactStyle(score: number): string {
+  if (score >= 80) return "bg-red-600 text-white";
+  if (score >= 50) return "bg-amber-500 text-white";
+  return "bg-black/5 text-black/50";
 }
 
 export default function HomePage() {
@@ -164,19 +174,19 @@ export default function HomePage() {
             {/* News — same as dashboard */}
             <section className="w-full lg:w-3/5">
               <div className="text-black">
-                <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm font-semibold">{t("home.latestNews")}</span>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-lg font-semibold">{t("home.latestNews")}</span>
                   <Link
                     href="/news"
-                    className="flex items-center gap-1 text-sm font-medium text-gray-500 underline underline-offset-2 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    className="flex items-center gap-1 text-base font-medium text-gray-500 no-underline hover:underline hover:underline-offset-2 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-300"
                   >
                     {t("common.viewAll")} <span aria-hidden="true">&rarr;</span>
                   </Link>
                 </div>
                 {newsLoading ? (
-                  <div className="px-3 pb-2 text-sm">{t("common.loading")}</div>
+                  <div className="px-3 pb-2 text-base">{t("common.loading")}</div>
                 ) : newsError ? (
-                  <div className="px-3 pb-2 text-sm">{newsError}</div>
+                  <div className="px-3 pb-2 text-base">{newsError}</div>
                 ) : (
                   <div className="space-y-6">
                     {news.slice(0, 5).map((item) => (
@@ -202,14 +212,41 @@ export default function HomePage() {
                             <h2 className="mb-1 text-base font-semibold leading-snug">
                               {item.title}
                             </h2>
+                            {/* Signal row: assets, impact, sentiment triangle */}
+                            {item.aiProcessed && (item.aiSentiment || typeof item.aiImpactScore === "number" || (item.aiAssets && item.aiAssets.length > 0)) && (
+                              <div className="mb-1 flex flex-wrap items-center gap-2">
+                                {item.aiAssets && item.aiAssets.length > 0 && (
+                                  <span className="flex items-center gap-1">
+                                    {item.aiAssets.slice(0, 3).map((a) => (
+                                      <span key={a} className="rounded border border-black/15 px-1.5 py-0.5 text-[13px] font-medium text-black/70">{a}</span>
+                                    ))}
+                                  </span>
+                                )}
+                                {typeof item.aiImpactScore === "number" && (
+                                  <span className={`rounded px-2 py-0.5 text-[15px] font-semibold tabular-nums ${impactStyle(item.aiImpactScore)}`}>
+                                    Impact {item.aiImpactScore}
+                                  </span>
+                                )}
+                                {item.aiSentiment === "bullish" && (
+                                  <span className="text-[13px] font-bold leading-none text-green-600">▲</span>
+                                )}
+                                {item.aiSentiment === "bearish" && (
+                                  <span className="text-[13px] font-bold leading-none text-red-600">▼</span>
+                                )}
+                                {item.aiSentiment === "neutral" && (
+                                  <span className="text-[13px] font-bold leading-none text-black/30" title="Unclear direction">–</span>
+                                )}
+                              </div>
+                            )}
+                            {/* Metadata row */}
                             {(item.source || item.publishedAt) && (
-                              <p className="mb-1 text-xs text-black/50">
+                              <div className="mb-1.5 text-[13px] text-black/40">
                                 {item.source}
                                 {item.source && item.publishedAt ? " · " : ""}
                                 {timeAgo(item.publishedAt)}
-                              </p>
+                              </div>
                             )}
-                            <p className="line-clamp-2 text-sm leading-relaxed text-black/80">
+                            <p className="line-clamp-2 text-[15px] leading-relaxed text-black/60">
                               {item.excerpt}
                             </p>
                           </div>
@@ -225,19 +262,19 @@ export default function HomePage() {
             <section className="w-full lg:w-2/5">
               <div className="text-black">
                 <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm font-semibold">{t("home.cryptoMarket")}</span>
+                  <span className="text-lg font-semibold">{t("home.cryptoMarket")}</span>
                   <Link
                     href="/market"
-                    className="flex items-center gap-1 text-sm font-medium text-gray-500 underline underline-offset-2 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    className="flex items-center gap-1 text-base font-medium text-gray-500 no-underline hover:underline hover:underline-offset-2 hover:text-black focus:outline-none focus:ring-2 focus:ring-gray-300"
                   >
                     {t("common.viewAll")} <span aria-hidden="true">&rarr;</span>
                   </Link>
                 </div>
 
                 {isLoading ? (
-                  <div className="px-3 pb-1 text-sm">{t("common.loading")}</div>
+                  <div className="px-3 pb-1 text-base">{t("common.loading")}</div>
                 ) : error ? (
-                  <div className="px-3 pb-3 text-sm">{error}</div>
+                  <div className="px-3 pb-3 text-base">{error}</div>
                 ) : (
                   <MarketTable rows={visibleCoins} />
                 )}

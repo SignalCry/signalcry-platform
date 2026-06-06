@@ -18,6 +18,10 @@ type NewsItem = {
   publishedAt?: string;
   url?: string;
   topics?: string[];
+  aiProcessed?: boolean;
+  aiSentiment?: "bullish" | "bearish" | "neutral" | null;
+  aiImpactScore?: number | null;
+  aiAssets?: string[];
 };
 
 type NewsResponse = {
@@ -28,6 +32,13 @@ type NewsResponse = {
 
 type Filters = { topic: string; source: string; date: string };
 type DropdownKey = "topic" | "source" | "date" | null;
+
+// Impact color scales with severity — high impact must visually pop
+function impactStyle(score: number): string {
+  if (score >= 80) return "bg-red-600 text-white";        // critical
+  if (score >= 50) return "bg-amber-500 text-white";      // notable
+  return "bg-black/5 text-black/50";                       // low / ignorable
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -423,31 +434,44 @@ export default function NewsPage() {
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <h2 className="mb-1 text-sm font-semibold leading-snug">
+                    <h2 className="mb-1 text-base font-semibold leading-snug">
                       {item.title}
                     </h2>
-                    <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                      {(item.source || item.publishedAt) && (
-                        <span className="text-xs text-black/40">
-                          {item.source}
-                          {item.source && item.publishedAt ? " · " : ""}
-                          {timeAgo(item.publishedAt)}
-                        </span>
-                      )}
-                      {item.topics && item.topics.length > 0 && (
-                        <div className="flex gap-1">
-                          {item.topics.map((tp) => (
-                            <span
-                              key={tp}
-                              className="rounded-full bg-black/5 px-2 py-0.5 text-[10px] font-medium text-black/50"
-                            >
-                              {tp}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs leading-relaxed text-black/60 line-clamp-2">
+                    {/* Tier 1 — the signal: assets, impact, sentiment arrow */}
+                    {item.aiProcessed && (item.aiSentiment || typeof item.aiImpactScore === "number" || (item.aiAssets && item.aiAssets.length > 0)) && (
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        {item.aiAssets && item.aiAssets.length > 0 && (
+                          <span className="flex items-center gap-1">
+                            {item.aiAssets.slice(0, 3).map((a) => (
+                              <span key={a} className="rounded border border-black/15 px-1.5 py-0.5 text-[13px] font-medium text-black/70">{a}</span>
+                            ))}
+                          </span>
+                        )}
+                        {typeof item.aiImpactScore === "number" && (
+                          <span className={`rounded px-2 py-0.5 text-[15px] font-semibold tabular-nums ${impactStyle(item.aiImpactScore)}`}>
+                            Impact {item.aiImpactScore}
+                          </span>
+                        )}
+                        {item.aiSentiment === "bullish" && (
+                          <span className="text-[13px] font-bold leading-none text-green-600">▲</span>
+                        )}
+                        {item.aiSentiment === "bearish" && (
+                          <span className="text-[13px] font-bold leading-none text-red-600">▼</span>
+                        )}
+                        {item.aiSentiment === "neutral" && (
+                          <span className="text-[13px] font-bold leading-none text-black/30" title="Unclear direction">–</span>
+                        )}
+                      </div>
+                    )}
+                    {/* Tier 2 — metadata: source + time, muted and smaller */}
+                    {(item.source || item.publishedAt) && (
+                      <div className="mb-1.5 text-[13px] text-black/40">
+                        {item.source}
+                        {item.source && item.publishedAt ? " · " : ""}
+                        {timeAgo(item.publishedAt)}
+                      </div>
+                    )}
+                    <p className="text-[15px] leading-relaxed text-black/60 line-clamp-2">
                       {item.excerpt}
                     </p>
                   </div>

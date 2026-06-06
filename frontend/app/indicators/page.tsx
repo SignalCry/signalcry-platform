@@ -217,14 +217,15 @@ export default function IndicatorsPage() {
 /* ─── EMA Table ──────────────────────────────────────────── */
 function EmaTable({ data }: { data: Indicator[] }) {
   return (
+    <div className="overflow-x-auto">
     <table className="w-full text-sm">
       <thead className="border-b border-black/10">
         <tr className="text-left">
-          <th className="px-4 py-3 font-bold">Coin</th>
-          <th className="px-4 py-3 font-bold">Price</th>
-          <th className="px-4 py-3 font-bold">EMA 20</th>
-          <th className="px-4 py-3 font-bold">EMA 50</th>
-          <th className="px-4 py-3 font-bold">EMA 200</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Coin</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Price</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">EMA 20</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">EMA 50</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">EMA 200</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-black/5">
@@ -232,12 +233,12 @@ function EmaTable({ data }: { data: Indicator[] }) {
           const coin = COIN_NAMES[row.symbol];
           return (
             <tr key={row.symbol}>
-              <td className="px-4 py-2">
+              <td className="px-2 py-2 whitespace-nowrap">
                 <div className="font-medium">{coin?.name ?? row.symbol}</div>
                 <div className="text-xs text-black/50">{coin?.symbol}</div>
               </td>
-              <td className="px-4 py-2 font-medium">{formatNum(row.price)}</td>
-              <td className="px-4 py-2">
+              <td className="px-2 py-2 font-medium whitespace-nowrap">{formatNum(row.price)}</td>
+              <td className="px-2 py-2 whitespace-nowrap">
                 {row.ema.ema20 ? (
                   <div>
                     <div className="font-medium">{formatNum(row.ema.ema20.value)}</div>
@@ -247,7 +248,7 @@ function EmaTable({ data }: { data: Indicator[] }) {
                   <span className="text-black/30">—</span>
                 )}
               </td>
-              <td className="px-4 py-2">
+              <td className="px-2 py-2 whitespace-nowrap">
                 {row.ema.ema50 ? (
                   <div>
                     <div className="font-medium">{formatNum(row.ema.ema50.value)}</div>
@@ -257,7 +258,7 @@ function EmaTable({ data }: { data: Indicator[] }) {
                   <span className="text-black/30">—</span>
                 )}
               </td>
-              <td className="px-4 py-2">
+              <td className="px-2 py-2 whitespace-nowrap">
                 {row.ema.ema200 ? (
                   <div>
                     <div className="font-medium">{formatNum(row.ema.ema200.value)}</div>
@@ -272,19 +273,21 @@ function EmaTable({ data }: { data: Indicator[] }) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 
 /* ─── RSI Table ──────────────────────────────────────────── */
 function RsiTable({ data }: { data: Indicator[] }) {
   return (
+    <div className="overflow-x-auto">
     <table className="w-full text-sm">
       <thead className="border-b border-black/10">
         <tr className="text-left">
-          <th className="px-4 py-3 font-bold">Coin</th>
-          <th className="px-4 py-3 font-bold">Price</th>
-          <th className="px-4 py-3 font-bold">RSI (14)</th>
-          <th className="px-4 py-3 font-bold">Condition</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Coin</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Price</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">RSI (14)</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Condition</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-black/5">
@@ -292,15 +295,15 @@ function RsiTable({ data }: { data: Indicator[] }) {
           const coin = COIN_NAMES[row.symbol];
           return (
             <tr key={row.symbol}>
-              <td className="px-4 py-2">
+              <td className="px-2 py-2 whitespace-nowrap">
                 <div className="font-medium">{coin?.name ?? row.symbol}</div>
                 <div className="text-xs text-black/50">{coin?.symbol}</div>
               </td>
-              <td className="px-4 py-2 font-medium">{formatNum(row.price)}</td>
-              <td className="px-4 py-2 font-medium">
+              <td className="px-2 py-2 font-medium whitespace-nowrap">{formatNum(row.price)}</td>
+              <td className="px-2 py-2 font-medium whitespace-nowrap">
                 {row.rsi ? formatNum(row.rsi.value) : <span className="text-black/30">—</span>}
               </td>
-              <td className="px-4 py-2">
+              <td className="px-2 py-2 whitespace-nowrap">
                 {row.rsi ? (
                   <RsiBadge condition={row.rsi.condition} />
                 ) : (
@@ -312,20 +315,22 @@ function RsiTable({ data }: { data: Indicator[] }) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 
 /* ─── MACD Table ─────────────────────────────────────────── */
 function MacdTable({ data }: { data: Indicator[] }) {
   return (
+    <div className="overflow-x-auto">
     <table className="w-full text-sm">
       <thead className="border-b border-black/10">
         <tr className="text-left">
-          <th className="px-4 py-3 font-bold">Coin</th>
-          <th className="px-4 py-3 font-bold">MACD</th>
-          <th className="px-4 py-3 font-bold">Signal</th>
-          <th className="px-4 py-3 font-bold">Histogram</th>
-          <th className="px-4 py-3 font-bold">Momentum</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Coin</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">MACD</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Signal</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Histogram</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Momentum</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-black/5">
@@ -333,20 +338,20 @@ function MacdTable({ data }: { data: Indicator[] }) {
           const coin = COIN_NAMES[row.symbol];
           return (
             <tr key={row.symbol}>
-              <td className="px-4 py-2">
+              <td className="px-2 py-2 whitespace-nowrap">
                 <div className="font-medium">{coin?.name ?? row.symbol}</div>
                 <div className="text-xs text-black/50">{coin?.symbol}</div>
               </td>
               {row.macd ? (
                 <>
-                  <td className="px-4 py-2 font-medium">
+                  <td className="px-2 py-2 font-medium whitespace-nowrap">
                     {formatNum(row.macd.macd, 4)}
                   </td>
-                  <td className="px-4 py-2 font-medium">
+                  <td className="px-2 py-2 font-medium whitespace-nowrap">
                     {formatNum(row.macd.signal, 4)}
                   </td>
                   <td
-                    className={`px-4 py-2 font-medium ${
+                    className={`px-2 py-2 font-medium whitespace-nowrap ${
                       row.macd.histogram >= 0
                         ? "text-green-600"
                         : "text-red-600"
@@ -355,16 +360,16 @@ function MacdTable({ data }: { data: Indicator[] }) {
                     {row.macd.histogram >= 0 ? "+" : ""}
                     {formatNum(row.macd.histogram, 4)}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-2 py-2 whitespace-nowrap">
                     <TrendBadge trend={row.macd.momentum} />
                   </td>
                 </>
               ) : (
                 <>
-                  <td className="px-4 py-2 text-black/30">—</td>
-                  <td className="px-4 py-2 text-black/30">—</td>
-                  <td className="px-4 py-2 text-black/30">—</td>
-                  <td className="px-4 py-2 text-black/30">—</td>
+                  <td className="px-2 py-2 text-black/30">—</td>
+                  <td className="px-2 py-2 text-black/30">—</td>
+                  <td className="px-2 py-2 text-black/30">—</td>
+                  <td className="px-2 py-2 text-black/30">—</td>
                 </>
               )}
             </tr>
@@ -372,21 +377,23 @@ function MacdTable({ data }: { data: Indicator[] }) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 
 /* ─── Bollinger Bands Table ──────────────────────────────── */
 function BbTable({ data }: { data: Indicator[] }) {
   return (
+    <div className="overflow-x-auto">
     <table className="w-full text-sm">
       <thead className="border-b border-black/10">
         <tr className="text-left">
-          <th className="px-4 py-3 font-bold">Coin</th>
-          <th className="px-4 py-3 font-bold">Price</th>
-          <th className="px-4 py-3 font-bold">Upper</th>
-          <th className="px-4 py-3 font-bold">Middle</th>
-          <th className="px-4 py-3 font-bold">Lower</th>
-          <th className="px-4 py-3 font-bold">Status</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Coin</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Price</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Upper</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Middle</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Lower</th>
+          <th className="px-2 py-3 font-bold whitespace-nowrap">Status</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-black/5">
@@ -394,32 +401,32 @@ function BbTable({ data }: { data: Indicator[] }) {
           const coin = COIN_NAMES[row.symbol];
           return (
             <tr key={row.symbol}>
-              <td className="px-4 py-2">
+              <td className="px-2 py-2 whitespace-nowrap">
                 <div className="font-medium">{coin?.name ?? row.symbol}</div>
                 <div className="text-xs text-black/50">{coin?.symbol}</div>
               </td>
-              <td className="px-4 py-2 font-medium">{formatNum(row.price)}</td>
+              <td className="px-2 py-2 font-medium whitespace-nowrap">{formatNum(row.price)}</td>
               {row.bollingerBands ? (
                 <>
-                  <td className="px-4 py-2 font-medium">
+                  <td className="px-2 py-2 font-medium whitespace-nowrap">
                     {formatNum(row.bollingerBands.upper)}
                   </td>
-                  <td className="px-4 py-2 font-medium">
+                  <td className="px-2 py-2 font-medium whitespace-nowrap">
                     {formatNum(row.bollingerBands.middle)}
                   </td>
-                  <td className="px-4 py-2 font-medium">
+                  <td className="px-2 py-2 font-medium whitespace-nowrap">
                     {formatNum(row.bollingerBands.lower)}
                   </td>
-                  <td className="px-4 py-2">
+                  <td className="px-2 py-2 whitespace-nowrap">
                     <BbBadge status={row.bollingerBands.status} />
                   </td>
                 </>
               ) : (
                 <>
-                  <td className="px-4 py-2 text-black/30">—</td>
-                  <td className="px-4 py-2 text-black/30">—</td>
-                  <td className="px-4 py-2 text-black/30">—</td>
-                  <td className="px-4 py-2 text-black/30">—</td>
+                  <td className="px-2 py-2 text-black/30">—</td>
+                  <td className="px-2 py-2 text-black/30">—</td>
+                  <td className="px-2 py-2 text-black/30">—</td>
+                  <td className="px-2 py-2 text-black/30">—</td>
                 </>
               )}
             </tr>
@@ -427,5 +434,6 @@ function BbTable({ data }: { data: Indicator[] }) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }
