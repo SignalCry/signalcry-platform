@@ -24,24 +24,44 @@ type MarketTableProps = {
   showVolume?: boolean;
 };
 
-const th = "px-3 py-2 font-medium sm:px-4 md:px-5";
-const td = "px-3 py-1.5 sm:px-4 md:px-5";
+const th =
+  "px-2 py-2 font-medium first:pl-0 last:pr-0 sm:px-3 md:px-4";
+const td =
+  "px-2 py-1.5 first:pl-0 last:pr-0 sm:px-3 md:px-4";
 
 export default function MarketTable({ rows, showVolume = false }: MarketTableProps) {
   const { t } = useTranslation();
 
+  // Extra columns sit off-screen; first 3 cols fill the viewport (Trading Economics style).
+  const scrollExtra = showVolume ? "13rem" : "6rem";
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[280px] text-base">
+    <div className="overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch]">
+      <table
+        className="table-fixed text-xs sm:text-sm lg:table-auto lg:!w-full"
+        style={{ width: `calc(100% + ${scrollExtra})` }}
+      >
+        <colgroup>
+          <col style={{ width: `calc((100% - ${scrollExtra}) * 0.40)` }} />
+          <col style={{ width: `calc((100% - ${scrollExtra}) * 0.34)` }} />
+          <col style={{ width: `calc((100% - ${scrollExtra}) * 0.26)` }} />
+          <col style={{ width: "6rem" }} />
+          {showVolume && <col style={{ width: "7rem" }} />}
+        </colgroup>
         <thead className="border-b border-black/10">
           <tr className="text-left">
-            <th className={th}>{t("table.coin")}</th>
-            <th className={th}>{showVolume ? t("table.price") : t("table.priceUSD")}</th>
-            <th className={`${th} hidden md:table-cell`}>{t("table.change")}</th>
-            <th className={th}>{t("table.percent")}</th>
+            <th className={`${th} min-w-0`}>{t("table.coin")}</th>
+            <th className={`${th} whitespace-nowrap text-right`}>{t("table.price")}</th>
+            <th className={`${th} whitespace-nowrap text-right`}>
+              {t("table.percent")}
+            </th>
+            <th className={`${th} whitespace-nowrap text-right pl-2`}>
+              {t("table.change")}
+            </th>
             {showVolume && (
-              <th className={`${th} hidden lg:table-cell whitespace-nowrap`}>
-                24h Volume (USDT)
+              <th className={`${th} whitespace-nowrap text-right pl-2`}>
+                <span className="hidden sm:inline">24h Volume (USDT)</span>
+                <span className="sm:hidden">Vol</span>
               </th>
             )}
           </tr>
@@ -56,27 +76,34 @@ export default function MarketTable({ rows, showVolume = false }: MarketTablePro
 
             return (
               <tr key={coin.id}>
-                <td className={td}>
-                  <div className="font-medium leading-tight">
+                <td className={`${td} min-w-0`}>
+                  <div className="truncate font-medium leading-tight">
                     <Link href={`/symbols/${coin.id}`}>{coin.name}</Link>
                   </div>
-                  <div className="text-xs text-black/60">{coin.symbol}</div>
+                  <div className="truncate text-[10px] text-black/60 sm:text-xs">
+                    {coin.symbol}
+                  </div>
                 </td>
-                <td className={`${td} font-medium whitespace-nowrap`}>
+                <td className={`${td} whitespace-nowrap text-right font-medium tabular-nums`}>
                   {formatPrice(coin.price)}
                 </td>
-                <td className={`${td} hidden font-medium whitespace-nowrap md:table-cell ${changeClass}`}>
-                  <span className="mr-1">{arrow}</span>
-                  {changeSign}
-                  {formatChange(coin.priceChange)}
-                </td>
-                <td className={`${td} font-medium whitespace-nowrap ${changeClass}`}>
-                  <span className="mr-1 md:hidden">{arrow}</span>
+                <td
+                  className={`${td} whitespace-nowrap text-right font-medium tabular-nums ${changeClass}`}
+                >
+                  <span className="mr-0.5">{arrow}</span>
                   {percentSign}
                   {formatPercent(coin.priceChangePercent)}%
                 </td>
+                <td
+                  className={`${td} whitespace-nowrap pl-2 text-right font-medium tabular-nums ${changeClass}`}
+                >
+                  {changeSign}
+                  {formatChange(coin.priceChange)}
+                </td>
                 {showVolume && (
-                  <td className={`${td} hidden font-medium text-black/70 whitespace-nowrap lg:table-cell`}>
+                  <td
+                    className={`${td} whitespace-nowrap pl-2 text-right font-medium text-black/70 tabular-nums`}
+                  >
                     ${formatVolume(coin.volume ?? 0)}
                   </td>
                 )}
