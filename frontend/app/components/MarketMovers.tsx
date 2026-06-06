@@ -43,7 +43,7 @@ export default function MarketMovers({ marketRows }: { marketRows: MarketRow[] }
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 text-sm font-medium transition-colors focus:outline-none ${
+            className={`px-4 py-2 text-base font-medium transition-colors focus:outline-none ${
               activeTab === tab.key
                 ? "border-b-2 border-black text-black"
                 : "text-black/40 hover:text-black/70"
@@ -71,11 +71,11 @@ export default function MarketMovers({ marketRows }: { marketRows: MarketRow[] }
               }`}
             >
               <div>
-                <div className="text-sm font-medium">{coin.name}</div>
+                <div className="text-base font-medium">{coin.name}</div>
                 <div className="text-xs text-black/60">{coin.symbol}</div>
               </div>
               <div className="text-right">
-                <div className="text-sm font-medium">{formatPrice(coin.price)}</div>
+                <div className="text-base font-medium">{formatPrice(coin.price)}</div>
                 <div className={`text-xs font-medium ${changeClass}`}>
                   {percentSign}{formatPercent(coin.priceChangePercent)}%
                 </div>

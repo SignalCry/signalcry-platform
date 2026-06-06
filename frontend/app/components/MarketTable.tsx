@@ -32,7 +32,7 @@ export default function MarketTable({ rows, showVolume = false }: MarketTablePro
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[280px] text-xs sm:text-sm">
+      <table className="w-full min-w-[280px] text-base">
         <thead className="border-b border-black/10">
           <tr className="text-left">
             <th className={th}>{t("table.coin")}</th>
@@ -60,7 +60,7 @@ export default function MarketTable({ rows, showVolume = false }: MarketTablePro
                   <div className="font-medium leading-tight">
                     <Link href={`/symbols/${coin.id}`}>{coin.name}</Link>
                   </div>
-                  <div className="text-[10px] text-black/60 sm:text-xs">{coin.symbol}</div>
+                  <div className="text-xs text-black/60">{coin.symbol}</div>
                 </td>
                 <td className={`${td} font-medium whitespace-nowrap`}>
                   {formatPrice(coin.price)}
