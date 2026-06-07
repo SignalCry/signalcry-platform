@@ -1,0 +1,41 @@
+/**
+ * Binance pair → coin metadata. Keep in sync with frontend/src/constants/coinMetadata.ts
+ */
+const COIN_METADATA = {
+  btcusdt: { id: "btc", name: "Bitcoin", symbol: "BTC" },
+  ethusdt: { id: "eth", name: "Ethereum", symbol: "ETH" },
+  bnbusdt: { id: "bnb", name: "BNB", symbol: "BNB" },
+  solusdt: { id: "sol", name: "Solana", symbol: "SOL" },
+  xrpusdt: { id: "xrp", name: "XRP", symbol: "XRP" },
+  adausdt: { id: "ada", name: "Cardano", symbol: "ADA" },
+  dogeusdt: { id: "doge", name: "Dogecoin", symbol: "DOGE" },
+  trxusdt: { id: "trx", name: "TRON", symbol: "TRX" },
+  polusdt: { id: "pol", name: "Polygon", symbol: "POL" },
+  linkusdt: { id: "link", name: "Chainlink", symbol: "LINK" },
+  ltcusdt: { id: "ltc", name: "Litecoin", symbol: "LTC" },
+  avaxusdt: { id: "avax", name: "Avalanche", symbol: "AVAX" },
+  dotusdt: { id: "dot", name: "Polkadot", symbol: "DOT" },
+  atomusdt: { id: "atom", name: "Cosmos", symbol: "ATOM" },
+  usdcusdt: { id: "usdc", name: "USD Coin", symbol: "USDC" },
+  suiusdt: { id: "sui", name: "Sui", symbol: "SUI" },
+  tonusdt: { id: "ton", name: "Toncoin", symbol: "TON" },
+  hbarusdt: { id: "hbar", name: "Hedera", symbol: "HBAR" },
+  nearusdt: { id: "near", name: "NEAR Protocol", symbol: "NEAR" },
+  shibusdt: { id: "shib", name: "Shiba Inu", symbol: "SHIB" },
+  uniusdt: { id: "uni", name: "Uniswap", symbol: "UNI" },
+  aptusdt: { id: "apt", name: "Aptos", symbol: "APT" },
+  arbusdt: { id: "arb", name: "Arbitrum", symbol: "ARB" },
+  xlmusdt: { id: "xlm", name: "Stellar", symbol: "XLM" },
+};
+
+/** id (e.g. "btc") → Binance pair (e.g. "btcusdt") */
+const ID_TO_PAIR = Object.fromEntries(
+  Object.entries(COIN_METADATA).map(([pair, meta]) => [meta.id, pair])
+);
+
+function resolvePair(symbolId) {
+  if (!symbolId || typeof symbolId !== "string") return null;
+  return ID_TO_PAIR[symbolId.toLowerCase()] ?? null;
+}
+
+module.exports = { COIN_METADATA, ID_TO_PAIR, resolvePair };

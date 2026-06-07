@@ -1,5 +1,6 @@
 const WebSocket = require("ws");
 const { ema, rsi, macd, bollingerBands } = require("../utils/indicators");
+const { fetchSpotKlines } = require("./binanceKlinesService");
 
 /**
  * Indicator Service
@@ -28,8 +29,6 @@ const TRADING_PAIRS = [
 const KLINE_INTERVAL = "1h";
 const KLINE_LIMIT = 201; // 201 so we have 200 after dropping the unclosed bar
 const BOOTSTRAP_DELAY_MS = 250;
-const MAX_KLINE_RETRIES = 5;
-const SPOT_KLINES_URL = "https://api.binance.com/api/v3/klines";
 
 // In-memory stores
 const klineData = new Map();   // symbol -> number[] (closing prices)
@@ -43,52 +42,9 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function getRetryAfterMs(res, attempt) {
-  const header = res.headers.get("retry-after");
-  if (header) {
-    const seconds = parseInt(header, 10);
-    if (!Number.isNaN(seconds)) return (seconds + 5) * 1000;
-  }
-  // Default backoff: 30s, 60s, 90s…
-  return (attempt + 1) * 30_000;
-}
-
-/**
- * Fetch historical klines from Binance Spot REST with retry on rate limits.
- * Public endpoint, no API key required.
- */
-async function fetchKlines(symbol, attempt = 0) {
-  const url =
-    `${SPOT_KLINES_URL}?symbol=${symbol.toUpperCase()}` +
-    `&interval=${KLINE_INTERVAL}&limit=${KLINE_LIMIT}`;
-
-  const res = await fetch(url, {
-    headers: { "User-Agent": "SignalCry/1.0" },
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (res.status === 429 || res.status === 418) {
-    if (attempt >= MAX_KLINE_RETRIES) {
-      throw new Error(`Binance REST ${res.status} for ${symbol} (max retries)`);
-    }
-    const retryMs = getRetryAfterMs(res, attempt);
-    console.warn(
-      `[Indicators] ${res.status} for ${symbol}, retrying in ${Math.round(retryMs / 1000)}s (attempt ${attempt + 1}/${MAX_KLINE_RETRIES})...`
-    );
-    await sleep(retryMs);
-    return fetchKlines(symbol, attempt + 1);
-  }
-
-  if (!res.ok) throw new Error(`Binance REST ${res.status} for ${symbol}`);
-
-  const data = await res.json();
-
-  // Each kline: [openTime, open, high, low, close, volume, closeTime, ...]
-  // Drop last bar if unclosed (closeTime > now)
-  const now = Date.now();
-  const closed = data.filter((k) => k[6] <= now);
-
-  return closed.map((k) => parseFloat(k[4])); // closing prices
+async function fetchKlines(symbol) {
+  const candles = await fetchSpotKlines(symbol, KLINE_INTERVAL, KLINE_LIMIT);
+  return candles.map((c) => c.close);
 }
 
 /**
