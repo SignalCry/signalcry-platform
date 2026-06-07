@@ -133,6 +133,16 @@ export default function CoinDetailsPage() {
           <div className="h-[60vh] min-h-[280px] w-full sm:h-[65vh] lg:h-[70vh]">
             <PriceChart symbolId={coin.id} />
           </div>
+          <p className="border-t border-black/5 px-3 py-1.5 text-right text-[10px] text-black/30">
+            <a
+              href="https://www.tradingview.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-black/50"
+            >
+              Charting by TradingView
+            </a>
+          </p>
         </section>
 
         {/* Market table */}

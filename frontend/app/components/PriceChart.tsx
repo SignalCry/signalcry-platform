@@ -87,6 +87,7 @@ export default function PriceChart({
         textColor: "#000000",
         fontFamily: CHART_FONT,
         fontSize: 12,
+        attributionLogo: false,
       },
       grid: {
         vertLines: { color: "rgba(0, 0, 0, 0.1)" },
@@ -194,14 +195,6 @@ export default function PriceChart({
           </div>
         )}
         <div ref={containerRef} className="h-full w-full" />
-        <a
-          href="https://www.tradingview.com/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute bottom-1 right-2 z-20 text-[10px] text-black/40 hover:text-black/60"
-        >
-          Charts by TradingView
-        </a>
       </div>
     </div>
   );
