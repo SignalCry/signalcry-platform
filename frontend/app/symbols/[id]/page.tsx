@@ -1,6 +1,6 @@
 "use client";
 
-import TradingViewWidget from "@/app/components/TradingViewWidget";
+import dynamic from "next/dynamic";
 import { useTranslation } from "@/src/i18n";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -9,6 +9,15 @@ import { useBinanceWebSocket } from "@/src/hooks/useBinanceWebSocket";
 import { COIN_METADATA } from "@/src/constants/coinMetadata";
 import { WS_BASE } from "@/src/constants/app";
 import { formatPrice, formatChange, formatPercent } from "@/src/utils/formatters";
+
+const PriceChart = dynamic(() => import("@/app/components/PriceChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center text-sm text-black/60">
+      Loading chart…
+    </div>
+  ),
+});
 
 type Coin = {
   id: string;
@@ -77,7 +86,6 @@ export default function CoinDetailsPage() {
     );
   }
 
-  const tvSymbol = `BINANCE:${coin.symbol.toUpperCase()}USDT`;
   const isUp = coin.trend === "up";
   const changeClass = isUp ? "text-green-600" : "text-red-600";
   const arrow = isUp ? "▲" : "▼";
@@ -122,8 +130,8 @@ export default function CoinDetailsPage() {
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-10">
         {/* Chart */}
         <section className="rounded border border-black/10 bg-white lg:col-span-7">
-          <div className="h-[60vh] sm:h-[65vh] lg:h-[70vh] min-h-105 w-full">
-            <TradingViewWidget symbol={tvSymbol} theme="light" />
+          <div className="h-[60vh] min-h-[280px] w-full sm:h-[65vh] lg:h-[70vh]">
+            <PriceChart symbolId={coin.id} />
           </div>
         </section>
 
