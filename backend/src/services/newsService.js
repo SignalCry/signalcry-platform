@@ -396,7 +396,7 @@ async function getAvailableDates() {
  */
 async function cleanupOldArticles() {
   const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 28);
+  cutoff.setDate(cutoff.getDate() - 7);
   const { count } = await prisma.news.deleteMany({
     where: { createdAt: { lt: cutoff } },
   });
