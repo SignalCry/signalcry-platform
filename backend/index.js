@@ -59,11 +59,11 @@ setInterval(() => {
 
 // Process pending articles with AI — run shortly after boot, then every 5 min
 setTimeout(() => {
-  processPendingArticles({ batchSize: 10, delayMs: 1500 })
+  processPendingArticles({ batchSize: 20, delayMs: 1000 })
     .catch((err) => console.error("[signalWorker] Initial run failed:", err.message));
 }, 30 * 1000); // 30s after boot, lets RSS populate first
 
 setInterval(() => {
-  processPendingArticles({ batchSize: 10, delayMs: 1500 })
+  processPendingArticles({ batchSize: 20, delayMs: 1000 })
     .catch((err) => console.error("[signalWorker] Scheduled run failed:", err.message));
 }, 5 * 60 * 1000); // every 5 minutes

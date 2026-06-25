@@ -26,7 +26,7 @@ async function processPendingArticles(options = {}) {
   const articles = await prisma.news.findMany({
     where: {
       aiProcessed: false,
-      publishedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+      publishedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
     },
     orderBy: { publishedAt: "desc" },
     take: batchSize,
