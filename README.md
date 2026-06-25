@@ -17,3 +17,5 @@ The platform delivers clear, AI-assisted sentiment signals and market insights f
 
 ## Status
 Early development (MVP in progress).
+
+test deployment

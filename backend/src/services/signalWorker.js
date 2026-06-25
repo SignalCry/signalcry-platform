@@ -63,12 +63,6 @@ async function processPendingArticles(options = {}) {
         `[signalWorker] Failed article ${article.id}: ${err.message}`
       );
 
-      // Mark as processed anyway so we don't retry a broken article forever.
-      await prisma.news.update({
-        where: { id: article.id },
-        data: { aiProcessed: true },
-      });
-
       failed++;
     }
 
