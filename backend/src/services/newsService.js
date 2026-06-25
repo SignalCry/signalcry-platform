@@ -170,9 +170,17 @@ async function fetchAllNews() {
  * Upsert a batch of articles into the DB (fire-and-forget, never throws).
  */
 async function upsertArticlesToDB(articles) {
+  // Only persist articles published today (local date) so the DB stays lean
+  // and the AI worker only ever sees fresh, same-day content.
+  const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  const todayArticles = articles.filter((a) => {
+    if (!a.publishedAt) return false;
+    return new Date(a.publishedAt).toISOString().slice(0, 10) === todayStr;
+  });
+
   try {
     await prisma.news.createMany({
-      data: articles
+      data: todayArticles
         .filter((a) => a.url) // url is required (unique key)
         .map((a) => ({
           id: a.id,

@@ -51,19 +51,19 @@ cron.schedule("0 3 * * *", () => {
   );
 });
 
-// Warm RSS cache on boot, then refresh every 10 min
+// Warm RSS cache on boot, then refresh every 30 min
 getNews().catch((err) => console.error("[newsService] Initial fetch failed:", err.message));
 setInterval(() => {
   getNews().catch((err) => console.error("[newsService] Scheduled fetch failed:", err.message));
-}, 10 * 60 * 1000);
+}, 30 * 60 * 1000);
 
 // Process pending articles with AI — run shortly after boot, then every 5 min
 setTimeout(() => {
-  processPendingArticles({ batchSize: 20, delayMs: 1000 })
+  processPendingArticles({ batchSize: 5, delayMs: 13000 })
     .catch((err) => console.error("[signalWorker] Initial run failed:", err.message));
 }, 30 * 1000); // 30s after boot, lets RSS populate first
 
 setInterval(() => {
-  processPendingArticles({ batchSize: 20, delayMs: 1000 })
+  processPendingArticles({ batchSize: 5, delayMs: 13000 })
     .catch((err) => console.error("[signalWorker] Scheduled run failed:", err.message));
-}, 5 * 60 * 1000); // every 5 minutes
+}, 2 * 60 * 1000); // every 2 minutes
