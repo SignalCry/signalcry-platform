@@ -84,11 +84,13 @@ async function callGroq(prompt) {
 async function generateText(prompt) {
   try {
     const text = await callGemini(prompt);
+    console.log("[aiClient] article processed via gemini");
     return { text, provider: "gemini" };
   } catch (geminiErr) {
     console.warn(`[aiClient] Gemini failed, trying Groq: ${geminiErr.message}`);
     try {
       const text = await callGroq(prompt);
+      console.log("[aiClient] article processed via groq");
       return { text, provider: "groq" };
     } catch (groqErr) {
       console.error(`[aiClient] Both providers failed. Groq: ${groqErr.message}`);
